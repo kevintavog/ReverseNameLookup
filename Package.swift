@@ -1,11 +1,18 @@
+// swift-tools-version:4.0
+
 import PackageDescription
+
 let package = Package(
 	name: "ReverseNameLookup",
-	targets: [],
 	dependencies: [
-		.Package(url: "https://github.com/PerfectlySoft/Perfect-HTTPServer.git", majorVersion: 3),
-		.Package(url: "https://github.com/PerfectlySoft/Perfect-CURL.git", majorVersion: 3),
-        .Package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", majorVersion: 4),
-        .Package(url: "https://github.com/duemunk/Async", majorVersion: 2)
-	]
+		.package(url: "https://github.com/PerfectlySoft/Perfect-HTTPServer.git", from: "3.0.0"),
+		.package(url: "https://github.com/PerfectlySoft/Perfect-CURL.git", from: "3.0.0"),
+        .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", from: "4.0.0"),
+        .package(url: "https://github.com/duemunk/Async", from: "2.0.0")
+	],
+    targets: [
+        .target(
+            name: "ReverseNameLookup",
+            dependencies: ["PerfectHTTPServer", "PerfectCURL", "SwiftyJSON", "Async"]),
+    ]
 )
