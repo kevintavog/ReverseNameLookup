@@ -1,0 +1,10 @@
+version: '2'
+services:
+
+  reversenamelookup:
+    container_name: reversenamelookup
+    image: reversenamelookup
+    ports:
+      - 8888:8888
+    volumes:
+      - ./reversenamelookup.config:/etc/reversenamelookup.config

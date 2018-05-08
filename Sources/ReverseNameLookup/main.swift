@@ -20,7 +20,7 @@ server.addRoutes(routes)
 server.serverPort = 8888
 
 do {
-	print("Using ElasticSearch host: \(Config.elasticSearchUrl)")
+	Logger.log("Using ElasticSearch host: \(Config.elasticSearchUrl)")
 	try server.start()
 } catch {
 	fatalError("\(error)")

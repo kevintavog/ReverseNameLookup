@@ -1,5 +1,3 @@
-# In case I don't remember these commands...
-
 build:
 	swift build
 
@@ -9,5 +7,13 @@ release-build:
 update:
 	swift package update
 
+image:
+	docker build -t reversenamelookup .
+
 push:
-	scp .build/release/ReverseNameLookup tavog@yuba.local:docker/reverseNameLookup/
+	docker save reversenamelookup | bzip2 > reversenamelookup-prod.bz2
+	scp reversenamelookup-prod.bz2 docker-compose.yml darkman@jupiter.local:docker/reversenamelookup/
+	ssh darkman@jupiter.local "cd docker/reversenamelookup; bzcat reversenamelookup-prod.bz2 | docker load"
+
+deploy:
+	ssh darkman@jupiter.local "cd docker/reversenamelookup; docker-compose down; nohup docker-compose up &"

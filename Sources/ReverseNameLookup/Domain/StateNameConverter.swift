@@ -9,7 +9,7 @@ struct StateNameConverter {
         }
 
         guard let state = stateMap[stateName.lowercased()] else {
-            print("WARNING: Missing entry for '\(stateName)'")
+            Logger.log("WARNING: Missing entry for '\(stateName)'")
             return addressInfo.state
         }
 

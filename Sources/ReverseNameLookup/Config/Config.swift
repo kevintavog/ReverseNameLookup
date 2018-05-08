@@ -54,16 +54,21 @@ class Config
             let jsonString: String = json.rawString()!
             try jsonString.write(to: Config.fullLocationFilenameURL, atomically: false, encoding: String.Encoding.utf8)
         } catch let error {
-            print("Unable to save locations: \(error)")
+            Logger.log("Unable to save locations: \(error)")
         }
     }
 
+#if os(OSX)
     private static var fullLocationFilenameURL: URL {
         return FileManager.default.urls(
             for: .libraryDirectory, 
             in: .userDomainMask)[0].appendingPathComponent("Preferences").appendingPathComponent("rangic.ReverseNameLookup.config")
     }
-
+#elseif os(Linux)
+    private static var fullLocationFilenameURL: URL {
+        return URL(fileURLWithPath: "/etc/reversenamelookup.config")
+    }
+#endif
     static var mapquestLookupKey: String
     {
         get { return Config.sharedInstance._mapquestLookupKey }

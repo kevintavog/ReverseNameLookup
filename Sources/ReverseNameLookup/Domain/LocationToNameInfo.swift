@@ -1,5 +1,5 @@
 import Foundation
-import Async
+import Queuer
 import SwiftyJSON
 
 class LocationToNameInfo {
@@ -19,32 +19,32 @@ class LocationToNameInfo {
         var openCageDataJson = JSON()
 
 
-        let calls = AsyncGroup()
-        calls.background {
+        let queue = Queuer(name: "calls")
+        queue.addOperation {
             do {
                 (_, osmJson) = try OSMLocationToPlacename().from(latitude: latitude, longitude: longitude)
             } catch {
-print("osm error: \(error)")
+Logger.log("osm error: \(error)")
             }
         }
 
-        calls.background {
+        queue.addOperation {
             do {
                 (_, mapzenJson) = try MapzenLocationToPlacename().from(latitude: latitude, longitude: longitude)
             } catch {
-print("mapzen error: \(error)")
+Logger.log("mapzen error: \(error)")
             }
         }
 
-        calls.background {
+        queue.addOperation {
             do {
                 (_, openCageDataJson) = try OpenCageDataLocationToPlacename().from(latitude: latitude, longitude: longitude)
             } catch {
-print("ocd error: \(error)")
+Logger.log("ocd error: \(error)")
             }
         }
 
-        calls.wait()
+        queue.queue.waitUntilAllOperationsAreFinished()
 
 
         let bestCountryCode = countryCodeFromAll(osmJson, mapzenJson, openCageDataJson)
@@ -89,7 +89,7 @@ print("ocd error: \(error)")
 
             response["osm_address"] = osmJson["address"]
         } catch {
-print("osm test error: \(error)")
+Logger.log("osm test error: \(error)")
         }
 
 
@@ -108,10 +108,10 @@ print("osm test error: \(error)")
             if properties.exists() {
                 response["mapzen_properties"] = properties
             } else {
-                print("Mapzen properties missing: \(latitude),\(longitude)")
+                Logger.log("Mapzen properties missing: \(latitude),\(longitude)")
             }
         } catch {
-print("mapzen test error: \(error)")
+Logger.log("mapzen test error: \(error)")
         }
 
         do {
@@ -130,10 +130,10 @@ print("mapzen test error: \(error)")
                 response["ocd_components"] = components
                 response["ocd_geometry"] = openCageDataJson["results"][0]["geometry"]
             } else {
-                print("OpenCageData cache missing components for \(latitude),\(longitude): \(openCageDataJson.rawString()!)")
+                Logger.log("OpenCageData cache missing components for \(latitude),\(longitude): \(openCageDataJson.rawString()!)")
             }
         } catch {
-print("ocd test error: \(error)")
+Logger.log("ocd test error: \(error)")
         }
 
         let bestCountryCode = countryCodeFromAll(osmJson, mapzenJson, openCageDataJson)

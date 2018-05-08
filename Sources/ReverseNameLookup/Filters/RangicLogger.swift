@@ -52,7 +52,7 @@ public class RangicLogger: HTTPRequestFilter, HTTPResponseFilter {
 			}
 		}
 
-        print("time=\"\(startString)\" duration_ms=\(duration) status=\(status) " +
+        Logger.log("time=\"\(startString)\" duration_ms=\(duration) status=\(status) " +
 			"method=\(method) path=\(path) params=\"\(paramsString)\" response_length=\(length) \(extra)")
 
 		callback(.continue)

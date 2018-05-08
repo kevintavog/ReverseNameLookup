@@ -29,16 +29,6 @@ class OpenStreetMapNameResolver {
         }
     """
 
-//     func resolve(_ latitude: Double, _ longitude: Double, maxDistanceInMeters: Int) throws -> OSMResponse? {
-// print("FYI: returning hard-coded test data")
-//         guard let data = testData.data(using: String.Encoding.utf8) else {
-//             throw NameResolverError.NoDataReturned
-//         }
-
-//        return try JSONDecoder().decode(OSMResponse.self, from: data)
-//     }
-
-
     func resolve(_ latitude: Double, _ longitude: Double, maxDistanceInMeters: Int) throws -> JSON? {
         var url = ""
         Config.mapquestLookupKey.withCString {

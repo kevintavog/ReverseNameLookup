@@ -12,7 +12,7 @@ extension Handlers {
 			request.scratchPad[RangicLogger.serviceErrorMessageKey] = message
 			try response.setBody(json: ["error": "\(message)"])
 		} catch {
-			print(error)
+			Logger.log("\(error)")
 		}
 		response.completed()
 	}
