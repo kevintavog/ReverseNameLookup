@@ -1,18 +1,22 @@
 import Foundation
 
+struct OSMLocationNameInfo: Codable, CustomStringConvertible {
+    var latitude: Double
+    var longitude: Double
 
-struct OSMResponse : Codable {
-    var location: ReverseNameLocation?
-    var date_retrieved: String?
+    var address: OSMAddress
 
-    var osm_id: String?
-    var display_name: String?
-    var place_id: String?
-    var lon: String?
-    var address: OSMAddress?
-    var lat: String?
-    var error: String?
+    public init(latitude: Double, longitude: Double, address: OSMAddress) {
+        self.latitude = latitude
+        self.longitude = longitude
+        self.address = address
+    }
+
+    public var description: String {
+        return "\(latitude), \(longitude); \(address)"
+    }
 }
+
 
 struct OSMAddress : Codable {
     var artwork: String?

@@ -70,7 +70,6 @@ class Handlers {
 
             let placename = try LocationToNameInfo().testFrom(latitude: lat, longitude: lon)
 
-            // let encodedData = try JSONEncoder().encode(placename)
             let encodedData = try JSON(placename).rawData()
             response.setBody(string: String(data: encodedData, encoding: .utf8)!)
         } catch {

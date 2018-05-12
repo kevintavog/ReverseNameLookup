@@ -68,12 +68,32 @@ Logger.log("ocd error: \(error)")
 
     func testFrom(latitude: Double, longitude: Double) throws -> [String:Any] {
         var response = [String:Any]()
-        var osmPlacename: Placename
-        var osmJson = JSON()
+        var foursquarePlacename: Placename
+        var foursquareJson = JSON()
         var mapzenPlacename: Placename
         var mapzenJson = JSON()
         var openCageDataPlacename: Placename
         var openCageDataJson = JSON()
+        var osmPlacename: Placename
+        var osmJson = JSON()
+
+        do {
+            (foursquarePlacename, foursquareJson) = try FoursquareLocationToPlacename().from(latitude: latitude, longitude: longitude)
+            response["foursquare"] = [
+                "site": foursquarePlacename.site ?? "",
+                "city": foursquarePlacename.city ?? "",
+                "state": foursquarePlacename.state ?? "",
+                "countryCode": foursquarePlacename.countryCode ?? "",
+                "countryName": foursquarePlacename.countryName ?? "",
+                "description": foursquarePlacename.description,
+                "fullDescription": foursquarePlacename.fullDescription
+            ]
+
+            // response["foursquare_address"] = foursquareJson["address"]
+        } catch {
+Logger.log("foursquare test error: \(error)")
+        }
+
 
         do {
             (osmPlacename, osmJson) = try OSMLocationToPlacename().from(latitude: latitude, longitude: longitude)

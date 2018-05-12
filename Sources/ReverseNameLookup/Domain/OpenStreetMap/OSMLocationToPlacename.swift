@@ -43,7 +43,7 @@ class OSMLocationToPlacename : ToPlacenameBase {
             fullDescription: json["display_name"].stringValue)
     }
 
-    func osmToInfo(_ json: JSON, _ latitude: Double, _ longitude: Double) throws -> LocationNameInfo {
+    func osmToInfo(_ json: JSON, _ latitude: Double, _ longitude: Double) throws -> OSMLocationNameInfo {
         if !json["address"].exists() {
             throw LocationToNameInfo.Error.NoAddress("\(json)")            
         }
@@ -84,7 +84,7 @@ class OSMLocationToPlacename : ToPlacenameBase {
             address.country_code = jsonAddress["country_code"].string
             address.country = jsonAddress["country"].string
 
-            return LocationNameInfo(
+            return OSMLocationNameInfo(
                 latitude: latitude,
                 longitude: longitude,
                 address: address)

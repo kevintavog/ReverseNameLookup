@@ -7,6 +7,8 @@ class Config
     private let _mapzenLookupKey: String
     private let _openCageDataLookupKey: String
     private let _elasticSearchUrl: String
+    private let _foursquareClientId: String
+    private let _foursquareClientSecret: String
 
 
     static var sharedInstance: Config
@@ -22,6 +24,8 @@ class Config
         var mapZKey = "mapzen_key"
         var oCDKey = "OpenCageData_key"
         var eUrl = "elastic_url"
+        var fourClientId = "foursquare_clientid"
+        var fourClientSecret = "foursquare_clientsecret"
 
         var loadedFile = false
         if let data = try? Data(contentsOf: Config.fullLocationFilenameURL) {
@@ -31,6 +35,8 @@ class Config
                 mapZKey = json["mapzenLookupKey"].stringValue
                 oCDKey = json["openCageDataLookupKey"].stringValue
                 eUrl = json["elasticSearchUrl"].stringValue
+                fourClientId = json["foursquareClientId"].stringValue
+                fourClientSecret = json["foursquareClientSecret"].stringValue
             }
         }
         
@@ -38,6 +44,8 @@ class Config
         _mapzenLookupKey = mapZKey
         _openCageDataLookupKey = oCDKey
         _elasticSearchUrl = eUrl
+        _foursquareClientId = fourClientId
+        _foursquareClientSecret = fourClientSecret
 
         if !loadedFile {
             self.save()
@@ -51,6 +59,8 @@ class Config
             json["mapzenLookupKey"].string = _mapzenLookupKey
             json["openCageDataLookupKey"].string = _openCageDataLookupKey
             json["elasticSearchUrl"].string = _elasticSearchUrl
+            json["foursquareClientId"].string = _foursquareClientId
+            json["foursquareClientSecret"].string = _foursquareClientSecret
             let jsonString: String = json.rawString()!
             try jsonString.write(to: Config.fullLocationFilenameURL, atomically: false, encoding: String.Encoding.utf8)
         } catch let error {
@@ -69,23 +79,28 @@ class Config
         return URL(fileURLWithPath: "/etc/reversenamelookup.config")
     }
 #endif
-    static var mapquestLookupKey: String
-    {
+
+    static var mapquestLookupKey: String {
         get { return Config.sharedInstance._mapquestLookupKey }
     }
 
-    static var mapzenLookupKey: String
-    {
+    static var mapzenLookupKey: String {
         get { return Config.sharedInstance._mapzenLookupKey }
     }
 
-    static var openCageDataLookupKey: String
-    {
+    static var openCageDataLookupKey: String {
         get { return Config.sharedInstance._openCageDataLookupKey }
     }
 
-    static var elasticSearchUrl: String
-    {
+    static var elasticSearchUrl: String {
         get { return Config.sharedInstance._elasticSearchUrl }
+    }
+
+    static var foursquareClientId: String {
+        get { return Config.sharedInstance._foursquareClientId }
+    }
+
+    static var foursquareClientSecret: String {
+        get { return Config.sharedInstance._foursquareClientSecret }
     }
 }
