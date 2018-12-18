@@ -48,6 +48,6 @@ class MapzenLocationToPlacename: ToPlacenameBase {
             properties["locality"].string,
             properties["localadmin"].string
         ]
-        return cityComponents.flatMap({ $0 }).first
+        return cityComponents.compactMap({ $0 }).first
     }
 }

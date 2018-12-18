@@ -3,6 +3,7 @@ import SwiftyJSON
 
 class Config
 {
+    private let _azureSubscriptionKey: String
     private let _mapquestLookupKey: String
     private let _mapzenLookupKey: String
     private let _openCageDataLookupKey: String
@@ -20,6 +21,7 @@ class Config
     }
 
     private init() {
+        var azureSubscriptionKey = "azure_subscription_key"
         var mapQKey = "mapquest_key"
         var mapZKey = "mapzen_key"
         var oCDKey = "OpenCageData_key"
@@ -31,6 +33,7 @@ class Config
         if let data = try? Data(contentsOf: Config.fullLocationFilenameURL) {
             loadedFile = true
             if let json = try? JSON(data:data) {
+                azureSubscriptionKey = json["azureSubscriptionKey"].stringValue
                 mapQKey = json["mapquestLookupKey"].stringValue
                 mapZKey = json["mapzenLookupKey"].stringValue
                 oCDKey = json["openCageDataLookupKey"].stringValue
@@ -39,7 +42,8 @@ class Config
                 fourClientSecret = json["foursquareClientSecret"].stringValue
             }
         }
-        
+
+        _azureSubscriptionKey = azureSubscriptionKey
         _mapquestLookupKey = mapQKey
         _mapzenLookupKey = mapZKey
         _openCageDataLookupKey = oCDKey
@@ -55,6 +59,7 @@ class Config
     private func save() {
         do {
             var json = JSON()
+            json["azureSubscriptionKey"].string = _azureSubscriptionKey
             json["mapquestLookupKey"].string = _mapquestLookupKey
             json["mapzenLookupKey"].string = _mapzenLookupKey
             json["openCageDataLookupKey"].string = _openCageDataLookupKey
@@ -79,6 +84,10 @@ class Config
         return URL(fileURLWithPath: "/etc/reversenamelookup.config")
     }
 #endif
+
+    static var azureSubscriptionKey: String {
+        get { return Config.sharedInstance._azureSubscriptionKey }
+    }
 
     static var mapquestLookupKey: String {
         get { return Config.sharedInstance._mapquestLookupKey }

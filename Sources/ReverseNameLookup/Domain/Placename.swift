@@ -23,6 +23,6 @@ struct Placename : Encodable {
             city, 
             state, 
             countryName]
-        self.description = nameComponents.flatMap( { $0 }).joined(separator: ", ")
+        self.description = nameComponents.compactMap( { $0 }).joined(separator: ", ")
     }
 }

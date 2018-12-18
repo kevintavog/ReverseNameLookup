@@ -151,7 +151,7 @@ class OSMLocationToPlacename : ToPlacenameBase {
             addressInfo.village,
             addressInfo.county
         ]
-        return cityComponents.flatMap({ $0 }).first
+        return cityComponents.compactMap({ $0 }).first
     }
 
     func siteName(_ addressInfo: OSMAddress) -> String? {
@@ -175,7 +175,7 @@ class OSMLocationToPlacename : ToPlacenameBase {
             addressInfo.park,
             addressInfo.nature_reserve,
         ]
-        return siteComponents.flatMap({ $0 }).first
+        return siteComponents.compactMap({ $0 }).first
     }
 
 

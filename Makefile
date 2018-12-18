@@ -1,3 +1,5 @@
+BUILD_ID:=$(shell date +%s)
+
 build:
 	swift build
 
@@ -7,13 +9,10 @@ release-build:
 update:
 	swift package update
 
+tojupiter: image push
+
 image:
-	docker build -t reversenamelookup .
+	docker build  . -t docker.rangic:6000/reversenamelookup:${BUILD_ID}
 
 push:
-	docker save reversenamelookup | bzip2 > reversenamelookup-prod.bz2
-	scp reversenamelookup-prod.bz2 docker-compose.yml darkman@jupiter.local:docker/reversenamelookup/
-	ssh darkman@jupiter.local "cd docker/reversenamelookup; bzcat reversenamelookup-prod.bz2 | docker load"
-
-deploy:
-	ssh darkman@jupiter.local "cd docker/reversenamelookup; docker-compose down; nohup docker-compose up &"
+	docker push docker.rangic:6000/reversenamelookup:${BUILD_ID}

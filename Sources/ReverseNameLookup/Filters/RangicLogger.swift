@@ -30,7 +30,7 @@ public class RangicLogger: HTTPRequestFilter, HTTPResponseFilter {
 		let method = response.request.method
 		let path = response.request.path
 		let start = response.request.scratchPad["start"] as? Date ?? Date()
-        let paramsString = (response.request.queryParams.flatMap({ (key, value) -> String in
+        let paramsString = (response.request.queryParams.compactMap({ (key, value) -> String in
             return "\(key)=\(value)"
         }) as Array).joined(separator: "&")
 

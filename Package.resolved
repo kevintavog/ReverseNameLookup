@@ -11,6 +11,15 @@
         }
       },
       {
+        "package": "PerfectCrypto",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-Crypto.git",
+        "state": {
+          "branch": null,
+          "revision": "18c46956149f9550e1b9540dd84536625284ac29",
+          "version": "3.1.1"
+        }
+      },
+      {
         "package": "PerfectCURL",
         "repositoryURL": "https://github.com/PerfectlySoft/Perfect-CURL.git",
         "state": {
@@ -26,15 +35,6 @@
           "branch": null,
           "revision": "b63e46909aad937c6434766f8f8c6720d8f3bd05",
           "version": "0.0.4"
-        }
-      },
-      {
-        "package": "PerfectCrypto",
-        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-Crypto.git",
-        "state": {
-          "branch": null,
-          "revision": "18c46956149f9550e1b9540dd84536625284ac29",
-          "version": "3.1.1"
         }
       },
       {
@@ -56,12 +56,12 @@
         }
       },
       {
-        "package": "PerfectLib",
-        "repositoryURL": "https://github.com/PerfectlySoft/PerfectLib.git",
+        "package": "cURL",
+        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-libcurl.git",
         "state": {
           "branch": null,
-          "revision": "acc5d2adf72e26b8a188ccc93ec65ca64276f354",
-          "version": "3.0.5"
+          "revision": "672f6695d9ae04fce16ad01decef0649e0b872b0",
+          "version": "2.0.6"
         }
       },
       {
@@ -83,6 +83,15 @@
         }
       },
       {
+        "package": "PerfectLib",
+        "repositoryURL": "https://github.com/PerfectlySoft/PerfectLib.git",
+        "state": {
+          "branch": null,
+          "revision": "acc5d2adf72e26b8a188ccc93ec65ca64276f354",
+          "version": "3.0.5"
+        }
+      },
+      {
         "package": "Queuer",
         "repositoryURL": "https://github.com/FabrizioBrancati/Queuer.git",
         "state": {
@@ -98,15 +107,6 @@
           "branch": "swift-test-macos",
           "revision": "6331d2b97a123957d3ecfe96f6fa107a4d21ea83",
           "version": null
-        }
-      },
-      {
-        "package": "cURL",
-        "repositoryURL": "https://github.com/PerfectlySoft/Perfect-libcurl.git",
-        "state": {
-          "branch": null,
-          "revision": "672f6695d9ae04fce16ad01decef0649e0b872b0",
-          "version": "2.0.6"
         }
       }
     ]
