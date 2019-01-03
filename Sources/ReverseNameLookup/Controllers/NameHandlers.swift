@@ -36,7 +36,7 @@ class Handlers {
 
             let placename = try LocationToNameInfo().from(latitude: lat, longitude: lon)
 
-            request.scratchPad["description"] = placename.description
+            request.scratchPad["description"] = placename.fullDescription
             let encodedData = try JSONEncoder().encode(placename)
             response.setBody(string: String(data: encodedData, encoding: .utf8)!)
         } catch {

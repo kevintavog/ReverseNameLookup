@@ -4,12 +4,11 @@ struct CountryCodeConverter {
         guard let c = code else {
             return nil
         }
-        return codeToName[c]
+        return codeToName[c.lowercased()]
     }
 
 
     static let codeToName = [
-        "gb": "GBR",
         "us": "USA"
     ]
 }

@@ -3,7 +3,7 @@ import SwiftyJSON
 
 
 class OpenStreetMapNameResolver {
-    let baseAddress = "http://open.mapquestapi.com/nominatim/v1/reverse?key=%1$s&format=json&lat=%2$lf&lon=%3$lf&addressdetails=1&zoom=18&accept-language=en-us"
+    let baseAddress = "http://open.mapquestapi.com/nominatim/v1/reverse?key=%1$s&format=json&lat=%2$lf&lon=%3$lf&addressdetails=1&zoom=20&accept-language=en-us"
 
     func resolve(_ latitude: Double, _ longitude: Double, maxDistanceInMeters: Int) throws -> JSON? {
         var url = ""

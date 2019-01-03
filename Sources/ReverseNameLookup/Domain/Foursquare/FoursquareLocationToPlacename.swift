@@ -8,7 +8,7 @@ class FoursquareLocationToPlacename : ToPlacenameBase {
 
     static public func getCity(_ json: JSON) -> String? {
         // Return the most repeated city name of the venues within 2 km
-        if let venues = FoursquareLocationToPlacename.toCompactVenues(json)["list"].array {
+        if let venues = FoursquareLocationToPlacename.toCompactVenues(json, maxDistance: 2000, discard: false)["list"].array {
             let nearbyCities = venues.filter { 
                 $0["city"].exists() && $0["distance"].exists() && $0["distance"] < 2000 }
                 .map { $0["city"].stringValue }
@@ -34,7 +34,7 @@ class FoursquareLocationToPlacename : ToPlacenameBase {
 
     override func fromCache(_ latitude: Double, _ longitude: Double) throws -> JSON? {
         var cachedJson = try cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: 3)
-        cachedJson["compact_venues"] = FoursquareLocationToPlacename.toCompactVenues(cachedJson)
+        cachedJson["compact_venues"] = FoursquareLocationToPlacename.toCompactVenues(cachedJson, maxDistance: 100, discard: true)
         return cachedJson
     }
 
@@ -67,13 +67,15 @@ class FoursquareLocationToPlacename : ToPlacenameBase {
             fullDescription: venue["location"]["formattedAddress"].stringValue)
     }
 
-    static private func toCompactVenues(_ json: JSON) -> JSON {
+    static private func toCompactVenues(_ json: JSON, maxDistance: Int, discard: Bool) -> JSON {
         let rawVenues = json["response"]["venues"]
         var response = JSON()
         if rawVenues.exists() {
             // Convert to an array & sort by distance, ascending
             let sorted = rawVenues.map({ $0.1 })
                 .sorted(by: { $0["location"]["distance"].intValue < $1["location"]["distance"].intValue })
+                .filter { $0["location"]["distance"].intValue < maxDistance 
+                            && !(discard && FoursquareLocationToPlacename.hasDiscardableCategories($0["categories"].array)) }
             if sorted.count > 0 {
                 let x = sorted.map({ venue -> [String:Any?] in
                     var categoryNames = ""
@@ -128,6 +130,15 @@ class FoursquareLocationToPlacename : ToPlacenameBase {
         return false
     }
 
+    static func hasDiscardableCategories(_ categories: [JSON]?) -> Bool {
+        if let categories = categories {
+            return categories.filter { 
+                    FoursquareLocationToPlacename.discardedCategoryShortNames.contains($0["shortName"].stringValue) }
+                .count > 0
+        }
+        return false
+    }
+
     // From https://developer.foursquare.com/docs/resources/categories
     static private var acceptedCategoryShortNames: Set<String> = [
         "Airport",
@@ -142,12 +153,21 @@ class FoursquareLocationToPlacename : ToPlacenameBase {
         "Museum",
         "Opera House",
         "Outdoor Sculpture",
-        // "Scenic Lookout",
+        "Palace",
+        "Scenic Lookout",
         "Sculpture",
         "Ski Area",
         "Spiritual Center",
         "Stadium",
         "Train Station",
         "Zoo"
+    ]
+
+    // These have been deemed 'never of interest' and are filtered out
+    static private var discardedCategoryShortNames: Set<String> = [
+        "Arcade", "Bowling Alley", "Casino", "Circus", "Comedy Club", 
+        "Bus", "Bus Station", "Bus Stop", "Coffee Shop", "Pharmacy", "Noodles", "Automotive",
+        "Café", "Korean", "Sandwiches", "Thai",
+        "Government", "Office", "Post Office", "Real Estate", "Shipping Store", "Tech Startup"
     ]
 }

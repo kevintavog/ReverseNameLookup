@@ -144,8 +144,6 @@ class OSMLocationToPlacename : ToPlacenameBase {
             addressInfo.city, 
             addressInfo.city_district,
             addressInfo.town,
-            addressInfo.hamlet,
-            addressInfo.locality,
             addressInfo.neighbourhood,
             addressInfo.suburb,
             addressInfo.village,
@@ -157,7 +155,6 @@ class OSMLocationToPlacename : ToPlacenameBase {
     func siteName(_ addressInfo: OSMAddress) -> String? {
         // The site name is the first of these components, none to many may exist
         let siteComponents = [
-            addressInfo.artwork,
             addressInfo.attraction,
             addressInfo.archaeological_site,
             addressInfo.garden,
@@ -165,14 +162,12 @@ class OSMLocationToPlacename : ToPlacenameBase {
             addressInfo.monument,
             addressInfo.museum,
             addressInfo.place_of_worship,
-            addressInfo.school,
             addressInfo.stadium,
             addressInfo.viewpoint,
             addressInfo.zoo,
 
             addressInfo.memorial,
 
-            addressInfo.park,
             addressInfo.nature_reserve,
         ]
         return siteComponents.compactMap({ $0 }).first

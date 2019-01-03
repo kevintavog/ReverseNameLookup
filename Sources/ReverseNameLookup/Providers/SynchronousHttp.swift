@@ -28,6 +28,22 @@ public func synchronousHttpPost(_ url: String, _ body: Data) throws -> Data? {
     return response.bodyString.data(using: .utf8, allowLossyConversion: false)
 }
 
+// Synchronously invoke a POST to a url, with a given body, return the data or an error.
+public func synchronousPlainHttpPost(_ url: String, _ body: String) throws -> Data? {
+    let data = body.data(using: .utf8, allowLossyConversion: false)!
+    let response = try CURLRequest(
+            url,
+            .httpMethod(CURLRequest.HTTPMethod.post),
+            .postData([UInt8](data)))
+        .perform()
+
+    if response.responseCode > 299 {
+        throw SynchronouseHttpError.RequestFailed("status code: \(response.responseCode); \(response.bodyString)")
+    }
+
+    return response.bodyString.data(using: .utf8, allowLossyConversion: false)
+}
+
 // Synchronously invoke a GET to a url, return the data or an error.
 public func synchronousHttpGet(_ url: String) throws -> Data? {
 

@@ -28,12 +28,32 @@ class OpenCageDataLocationToPlacename : ToPlacenameBase{
             throw LocationToNameInfo.Error.NoAddress("\(json)")
         }
 
+        if json["results"][1].exists() {
+            Logger.log("OpenCageData has multiple results: \(json["results"])")
+        }
+
         return Placename(
-            site: nil,
+            site: siteName(components),
             city: components["city"].string,
             state: components["state_code"].string,
             countryCode: components["country_code"].string,
             countryName: components["country"].string,
             fullDescription: json["results"][0]["formatted"].stringValue)
+    }
+
+    fileprivate func siteName(_ components: JSON) -> String? {
+        return [
+            components["attraction"].string,
+            components["archaeological_site"].string,
+            components["body_of_water"].string,
+            components["castle"].string,
+            components["garden"].string,
+            components["library"].string,
+            components["museum"].string,
+            components["place_of_worship"].string,
+            components["ruins"].string,
+            components["stadium"].string,
+            components["zoo"].string,
+        ].compactMap({ $0 }).first
     }
 }

@@ -1,8 +1,13 @@
 import Foundation
 
 struct Distance {
-    static public func metersBetween(_ lat1: Double, _ lon1: Double, _ lat2: Double, _ lon2: Double) -> Double
-    {
+    static public func areaOf(_ lat1: Double, _ lon1: Double, _ lat2: Double, _ lon2: Double) -> Double {
+        let width = Distance.metersBetween(lat1, lon1, lat1, lon2)
+        let height = Distance.metersBetween(lat1, lon1, lat2, lon1)
+        return width * height
+    }
+
+    static public func metersBetween(_ lat1: Double, _ lon1: Double, _ lat2: Double, _ lon2: Double) -> Double {
         let lat1rad = lat1 * Double.pi/180
         let lon1rad = lon1 * Double.pi/180
         let lat2rad = lat2 * Double.pi/180

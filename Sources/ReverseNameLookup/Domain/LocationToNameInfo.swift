@@ -16,9 +16,8 @@ class LocationToNameInfo {
     func from(latitude: Double, longitude: Double) throws -> Placename {
         var azureJson = JSON()
         var foursquareJson = JSON()
-        // var mapzenJson = JSON()
-        var osmJson = JSON()
         var openCageDataJson = JSON()
+        var overpassPlacename: Placename = Placename(site: nil, city: nil, state: nil, countryCode: nil, countryName: nil, fullDescription: "")
 
 
         let queue = Queuer(name: "calls")
@@ -38,39 +37,30 @@ Logger.log("foursquare error: \(error)")
             }
         }
 
-//         queue.addOperation {
-//             do {
-//                 (_, mapzenJson) = try MapzenLocationToPlacename().from(latitude: latitude, longitude: longitude)
-//             } catch {
-// Logger.log("mapzen error: \(error)")
-//             }
-//         }
-
         queue.addOperation {
             do {
-                (_, osmJson) = try OSMLocationToPlacename().from(latitude: latitude, longitude: longitude)
+                (_, openCageDataJson) = try OpenCageDataLocationToPlacename().from(latitude: latitude, longitude: longitude)
             } catch {
-Logger.log("osm error: \(error)")
+Logger.log("opencagedata error: \(error)")
             }
         }
 
         queue.addOperation {
             do {
-                (_, openCageDataJson) = try OpenCageDataLocationToPlacename().from(latitude: latitude, longitude: longitude)
+                (overpassPlacename, _) = try OverpassLocationToPlacename().from(latitude: latitude, longitude: longitude)
             } catch {
-Logger.log("ocd error: \(error)")
+Logger.log("overpass error: \(error)")
             }
         }
 
         queue.queue.waitUntilAllOperationsAreFinished()
 
-
-        let bestCountryCode = countryCodeFromAll(azureJson, osmJson, openCageDataJson)
-        var bestCity = cityFromAll(azureJson, foursquareJson, osmJson, openCageDataJson, bestCountryCode)
-        let bestState = stateFromAll(azureJson, osmJson, openCageDataJson, bestCountryCode)
-        let bestCountryName = countryNameFromAll(azureJson, osmJson, openCageDataJson, bestCountryCode)
-        let bestSite = siteFromAll(azureJson, osmJson, openCageDataJson, bestCity)
-        let bestDescription = descriptionFromAll(azureJson, osmJson, openCageDataJson)
+        let bestCountryCode = countryCodeFromAll(overpassPlacename, azureJson, openCageDataJson)
+        var bestCity = cityFromAll(overpassPlacename, azureJson, foursquareJson, openCageDataJson, bestCountryCode)
+        let bestState = stateFromAll(overpassPlacename, azureJson, openCageDataJson, bestCountryCode)
+        let bestCountryName = countryNameFromAll(overpassPlacename, azureJson, openCageDataJson, bestCountryCode)
+        let bestSite = siteFromAll(overpassPlacename, azureJson, openCageDataJson, bestCity)
+        let bestDescription = descriptionFromAll(overpassPlacename, azureJson, openCageDataJson)
         if bestSite == bestCity {
             bestCity = nil
         }
@@ -90,12 +80,10 @@ Logger.log("ocd error: \(error)")
         var azureJson = JSON()
         var foursquarePlacename: Placename
         var foursquareJson = JSON()
-        // var mapzenPlacename: Placename
-        // var mapzenJson = JSON()
         var openCageDataPlacename: Placename
         var openCageDataJson = JSON()
-        var osmPlacename: Placename
-        var osmJson = JSON()
+        var overpassPlacename: Placename = Placename(site: nil, city: nil, state: nil, countryCode: nil, countryName: nil, fullDescription: "")
+        var overpassJson = JSON()
 
 
         do {
@@ -134,45 +122,6 @@ Logger.log("foursquare test error: \(error)")
 
 
         do {
-            (osmPlacename, osmJson) = try OSMLocationToPlacename().from(latitude: latitude, longitude: longitude)
-            response["osm"] = [
-                "site": osmPlacename.site ?? "",
-                "city": osmPlacename.city ?? "",
-                "state": osmPlacename.state ?? "",
-                "countryCode": osmPlacename.countryCode ?? "",
-                "countryName": osmPlacename.countryName ?? "",
-                "description": osmPlacename.description,
-                "fullDescription": osmPlacename.fullDescription
-            ]
-
-            response["osm_address"] = osmJson["address"]
-        } catch {
-Logger.log("osm test error: \(error)")
-        }
-
-
-//         do {
-//             (mapzenPlacename, mapzenJson) = try MapzenLocationToPlacename().from(latitude: latitude, longitude: longitude)
-//             response["mapzen"] = [
-//                 "city": mapzenPlacename.city ?? "",
-//                 "state": mapzenPlacename.state ?? "",
-//                 "countryCode": mapzenPlacename.countryCode ?? "",
-//                 "countryName": mapzenPlacename.countryName ?? "",
-//                 "description": mapzenPlacename.description,
-//                 "fullDescription": mapzenPlacename.fullDescription
-//             ]
-
-//             let properties = mapzenJson["features"][0]["properties"] 
-//             if properties.exists() {
-//                 response["mapzen_properties"] = properties
-//             } else {
-//                 Logger.log("Mapzen properties missing: \(latitude),\(longitude)")
-//             }
-//         } catch {
-// Logger.log("mapzen test error: \(error)")
-//         }
-
-        do {
             (openCageDataPlacename, openCageDataJson) = try OpenCageDataLocationToPlacename().from(latitude: latitude, longitude: longitude)
             response["ocd"] = [
                 "city": openCageDataPlacename.city ?? "",
@@ -182,23 +131,36 @@ Logger.log("osm test error: \(error)")
                 "description": openCageDataPlacename.description,
                 "fullDescription": openCageDataPlacename.fullDescription
             ]
-            
-            let components = openCageDataJson["results"][0]["components"]
-            if components.exists() {
-                response["ocd_components"] = components
-                response["ocd_geometry"] = openCageDataJson["results"][0]["geometry"]
-            } else {
-                Logger.log("OpenCageData cache missing components for \(latitude),\(longitude): \(openCageDataJson.rawString()!)")
+
+            if openCageDataJson["results"].exists() {
+                response["ocd_results"] = openCageDataJson["results"]
             }
         } catch {
 Logger.log("ocd test error: \(error)")
         }
 
-        let bestCountryCode = countryCodeFromAll(azureJson, osmJson, openCageDataJson)
-        var bestCity = cityFromAll(azureJson, foursquareJson, osmJson, openCageDataJson, bestCountryCode)
-        let bestState = stateFromAll(azureJson, osmJson, openCageDataJson, bestCountryCode)
-        let bestCountryName = countryNameFromAll(azureJson, osmJson, openCageDataJson, bestCountryCode)
-        let bestSite = siteFromAll(azureJson, osmJson, openCageDataJson, bestCity)
+        do {
+            (overpassPlacename, overpassJson) = try OverpassLocationToPlacename().from(latitude: latitude, longitude: longitude)
+            response["overpass"] = [
+                "site": overpassPlacename.site ?? "",
+                "city": overpassPlacename.city ?? "",
+                "state": overpassPlacename.state ?? "",
+                "countryCode": overpassPlacename.countryCode ?? "",
+                "countryName": overpassPlacename.countryName ?? "",
+                "description": overpassPlacename.description,
+                "fullDescription": overpassPlacename.fullDescription
+            ]
+
+            response["overpass_elements"] = overpassJson["elements"]
+        } catch {
+Logger.log("overpass test error: \(error)")
+        }
+
+        let bestCountryCode = countryCodeFromAll(overpassPlacename, azureJson, openCageDataJson)
+        var bestCity = cityFromAll(overpassPlacename, azureJson, foursquareJson, openCageDataJson, bestCountryCode)
+        let bestState = stateFromAll(overpassPlacename, azureJson, openCageDataJson, bestCountryCode)
+        let bestCountryName = countryNameFromAll(overpassPlacename, azureJson, openCageDataJson, bestCountryCode)
+        let bestSite = siteFromAll(overpassPlacename, azureJson, openCageDataJson, bestCity)
 
         if bestSite == bestCity {
             bestCity = nil
@@ -216,54 +178,68 @@ Logger.log("ocd test error: \(error)")
     }
 
     // Utilize all providers, trying to come up with the best name possible
-    func siteFromAll(_ azureJson: JSON, _ osmJson: JSON, _ openCageDataJson: JSON, _ city: String?) -> String? {
-        // OpenStreetMap is a good source for 'site'; OpenCageData *might* be, too
-        // The site name is the first of these components, zero to many may exist
-        let osmAddress = osmJson["address"]
+    func siteFromAll(_ overpassPlacename: Placename, _ azureJson: JSON, _ openCageDataJson: JSON, _ city: String?) -> String? {
+
+        // Always prefer results from Overpass, as it's the site the location is in, rather than near
+        if overpassPlacename.site != nil {
+            return overpassPlacename.site
+        }
+
         let openCageDataComponents = openCageDataJson["results"][0]["components"]
         var names = [
             openCageDataComponents["attraction"].string,
-            osmAddress["attraction"].string,
-            osmAddress["archaeological_site"].string,
-            osmAddress["castle"].string,
-            osmAddress["garden"].string,
-            osmAddress["library"].string,
-            osmAddress["monument"].string,
-            osmAddress["museum"].string,
-            osmAddress["place_of_worship"].string,
-            osmAddress["stadium"].string,
-            osmAddress["viewpoint"].string,
-            osmAddress["zoo"].string,
-
-            osmAddress["memorial"].string,
-
-            osmAddress["nature_reserve"].string,
+            openCageDataComponents["archaeological_site"].string,
+            openCageDataComponents["artwork"].string,
+            openCageDataComponents["body_of_water"].string,
+            openCageDataComponents["castle"].string,
+            openCageDataComponents["garden"].string,
+            openCageDataComponents["memorial"].string,
+            openCageDataComponents["museum"].string,
+            openCageDataComponents["place_of_worship"].string,
+            openCageDataComponents["ruins"].string,
+            openCageDataComponents["stadium"].string,
+            openCageDataComponents["zoo"].string,
         ]
 
+
+
+        // openCageData has a few more _types that *might* be interesting; perhaps these ought to be a secondary site?
+        //  "beach", "library", "memorial", "monument", "nature_reserve", "park", 
+        //  "university", "viewpoint",
+
+        if overpassPlacename.city == nil {
+            names.append(openCageDataComponents["cycleway"].string)
+            names.append(openCageDataComponents["path"].string)
+            names.append(openCageDataComponents["footway"].string)
+        }
+
         // Not all paths are worth including - don't include any in a city
-        if city != nil && osmAddress["county"].stringValue == city! {
+/*        if city != nil && osmAddress["county"].stringValue == city! {
             names.append(osmAddress["cycleway"].string)
             names.append(openCageDataComponents["cycleway"].string)
             names.append(osmAddress["path"].string)
             names.append(openCageDataComponents["path"].string)
             names.append(openCageDataComponents["footway"].string)
         }
-
+*/
         return names.compactMap({ $0 }).first
     }
 
-    func cityFromAll(_ azureJson: JSON, _ foursquareJson: JSON, _ osmJson: JSON,
+    func cityFromAll(_ overpassPlacename: Placename, _ azureJson: JSON, _ foursquareJson: JSON,
                      _ openCageDataJson: JSON, _ countryCode: String?) -> String? {
+
+        // Always prefer results from Overpass, as it's the city the location is in, rather than near
+        if overpassPlacename.city != nil {
+            return overpassPlacename.city
+        }
+
         let azureAddress = azureJson["addresses"][0]["address"]
-        let osmAddress = osmJson["address"]
         let openCageDataComponents = openCageDataJson["results"][0]["components"]
 
         var azureMunicipality: String? = azureAddress["municipality"].string
-        var osmNeighborhood = osmAddress["neighbourhood"].string
         if let cc = countryCode {
             switch cc {
                 case "mx":
-                    osmNeighborhood = nil
                     azureMunicipality = nil
                 default:
                     break
@@ -286,24 +262,14 @@ Logger.log("ocd test error: \(error)")
 
         let names = [
             azureMunicipality,
-
             FoursquareLocationToPlacename.getCity(foursquareJson),
-
-            osmAddress["city"].string,
-            osmAddress["city_district"].string,
-            osmAddress["town"].string,
-            osmNeighborhood,
-            osmAddress["suburb"].string,
-            osmAddress["village"].string,
-            osmAddress["county"].string,
-
             openCageDataComponents["city"].string
         ]
 
         return names.compactMap({ $0 }).first
     }
 
-    func stateFromAll(_ azureJson: JSON, _ osmJson: JSON, _ openCageDataJson: JSON, _ countryCode: String?) -> String? {
+    func stateFromAll(_ overpassPlacename: Placename, _ azureJson: JSON, _ openCageDataJson: JSON, _ countryCode: String?) -> String? {
 
         var names = [
             openCageDataJson["results"][0]["components"]["state_code"].string,
@@ -331,7 +297,7 @@ Logger.log("ocd test error: \(error)")
         return names.compactMap({ $0 }).first
     }
 
-    func countryNameFromAll(_ azureJson: JSON, _ osmJson: JSON, _ openCageDataJson: JSON, _ countryCode: String?) -> String? {
+    func countryNameFromAll(_ overpassPlacename: Placename, _ azureJson: JSON, _ openCageDataJson: JSON, _ countryCode: String?) -> String? {
 
         switch countryCode ?? "" {
             case "us":
@@ -349,7 +315,7 @@ Logger.log("ocd test error: \(error)")
         return names.compactMap({ $0 }).first
     }
 
-    func countryCodeFromAll(_ azureJson: JSON, _ osmJson: JSON, _ openCageDataJson: JSON) -> String? {
+    func countryCodeFromAll(_ overpassPlacename: Placename, _ azureJson: JSON, _ openCageDataJson: JSON) -> String? {
         let names = [
             openCageDataJson["results"][0]["components"]["country_code"].string,
             azureJson["addresses"][0]["address"]["countryCode"].string,
@@ -357,10 +323,10 @@ Logger.log("ocd test error: \(error)")
         return names.compactMap({ $0 }).first
     }
 
-    func descriptionFromAll(_ azureJson: JSON, _ osmJson: JSON, _ openCageDataJson: JSON) -> String {
+    func descriptionFromAll(_ overpassPlacename: Placename, _ azureJson: JSON, _ openCageDataJson: JSON) -> String {
         let names = [
             openCageDataJson["results"][0]["formatted"].string,
-            osmJson["display_name"].string,
+            overpassPlacename.fullDescription,
             ""
         ]
         return names.compactMap({ $0 }).first ?? ""

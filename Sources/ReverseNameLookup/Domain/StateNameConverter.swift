@@ -16,6 +16,24 @@ struct StateNameConverter {
         return state
     }
 
+    static func toName(_ countryCode: String, _ state: String?) -> String? {
+        guard let stateName = state else {
+            return state
+        }
+        if countryCode.lowercased() == "mx" {
+            return nil
+        }
+
+        guard let stateMap = codeToStateMap[countryCode.lowercased()] else {
+            return state
+        }
+        guard let newName = stateMap[stateName.lowercased()] else {
+            Logger.log("WARNING: Missing entry for '\(stateName)'")
+            return state
+        }
+
+        return newName
+    }
 
     static let codeToStateMap = [
         "ca": [

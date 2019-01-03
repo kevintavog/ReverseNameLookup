@@ -12,6 +12,13 @@ let logger = RangicLogger()
 server.setRequestFilters([(logger, .high)])
 server.setResponseFilters([(logger, .low)])
 
+/*
+do {
+	try OverpassLocationToPlacename.filterFile("overpass.json")
+} catch {
+	fatalError("\(error)")
+}
+*/
 
 var routes = makeJSONRoutes()
 routes.add(method: .get, uri: "/status", handler: statusHandler)
@@ -25,4 +32,3 @@ do {
 } catch {
 	fatalError("\(error)")
 }
-
