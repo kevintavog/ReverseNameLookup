@@ -3,7 +3,7 @@ import SwiftyJSON
 
 class FoursquareLocationToPlacename : ToPlacenameBase {
 
-    let cacheResolver = FoursquareCachedNameResolver()
+    let cacheResolver = ElasticSearchCachedNameResolver(indexName: "foursquare_placenames_cache")
 
     static public func getCity(_ json: JSON) -> String? {
         // Return the most repeated city name of the venues within 2 km

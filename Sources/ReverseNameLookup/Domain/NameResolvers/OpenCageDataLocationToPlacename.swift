@@ -3,7 +3,7 @@ import SwiftyJSON
 
 class OpenCageDataLocationToPlacename : ToPlacenameBase{
 
-    let cacheResolver = OpenCageDataCachedNameResolver()
+    let cacheResolver = ElasticSearchCachedNameResolver(indexName: "opencagedata_placenames_cache")
 
     override func placenameIdentifier() throws -> String {
         return "OpenCageData"

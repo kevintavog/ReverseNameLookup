@@ -3,7 +3,7 @@ import SwiftyJSON
 
 class AzureLocationToPlacename: ToPlacenameBase {
 
-    let cacheResolver = AzureCachedNameResolver()
+    let cacheResolver = ElasticSearchCachedNameResolver(indexName: "azure_placenames_cache")
 
     override func placenameIdentifier() throws -> String {
         return "Azure"

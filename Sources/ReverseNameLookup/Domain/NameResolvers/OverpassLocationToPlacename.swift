@@ -15,7 +15,7 @@ class OverpassLocationToPlacename : ToPlacenameBase{
 
     let logDiagnostics = false
 
-    let cacheResolver = OverpassCachedNameResolver()
+    let cacheResolver = ElasticSearchCachedNameResolver(indexName: "overpass_placenames_cache")
 
     override func placenameIdentifier() throws -> String {
         return "Overpass"
@@ -317,7 +317,7 @@ Logger.log("output: \(outJson)")
     func filterResponse(_ json: JSON) -> JSON {
         var filteredJson = JSON()
         for (key, keyJson):(String, JSON) in json {
-            if !isIgnoredKey(key) && !isIgnoredKeyAndValue(key, keyJson) {
+            if !isIgnoredKey(key) {
                 if let _ = keyJson.array {
                     var items = [JSON]()
                     for (_, indexJson):(String, JSON) in keyJson {
@@ -333,18 +333,6 @@ Logger.log("output: \(outJson)")
         }
 
         return filteredJson
-    }
-
-    func isIgnoredKeyAndValue(_ key: String, _ json: JSON) -> Bool {
-        return false
-        // Somehow, a few values come across as booleans periodically. These ought to be doubles, but ??
-        if (key == "minlat" || key == "maxlat" || key == "minlon" || key == "maxlon") && json.bool != nil {
-            return true
-        }
-        if key == "version" && json.bool != nil {
-            return true
-        }
-        return false
     }
 
     func isIgnoredKey(_ key: String) -> Bool {

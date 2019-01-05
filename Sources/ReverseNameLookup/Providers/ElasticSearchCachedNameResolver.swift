@@ -1,7 +1,13 @@
 import Foundation
 import SwiftyJSON
 
-class BaseElasticSearchCachedNameResolver {
+class ElasticSearchCachedNameResolver {
+
+    let indexName: String
+    init(indexName: String) {
+        self.indexName = indexName
+    }
+
     let searchTemplate = """
         {
             "size": 1,
@@ -37,7 +43,7 @@ class BaseElasticSearchCachedNameResolver {
     """
 
 
-    func resolve(_ indexName: String, _ latitude: Double, _ longitude: Double, _ maxDistanceInMeters: Int) throws -> JSON {
+    func resolve(_ latitude: Double, _ longitude: Double, maxDistanceInMeters: Int) throws -> JSON {
         let body = String(format: searchTemplate, latitude, longitude, maxDistanceInMeters)
         let url = "\(Config.elasticSearchUrl)/\(indexName)/entry/_search"
         guard let data = try synchronousHttpPost(url, body) else {
@@ -53,7 +59,7 @@ class BaseElasticSearchCachedNameResolver {
         return json["hits"]["hits"][0]["_source"]
     }
 
-    func cache(_ indexName: String, _ latitude: Double, _ longitude: Double, _ json: JSON) throws {
+    func cache(_ latitude: Double, _ longitude: Double, _ json: JSON) throws {
         // Add a couple of book-keeping fields
         //      Track the retrieved date so items can be re-retrieved eventually.
         //      Add the location as an ElasticSearch geopoint to enable search by distance from a location
