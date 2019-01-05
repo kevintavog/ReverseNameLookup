@@ -32,8 +32,10 @@ class OpenCageDataLocationToPlacename : ToPlacenameBase{
             Logger.log("OpenCageData has multiple results: \(json["results"])")
         }
 
+        let site = siteName(components)
         return Placename(
-            site: siteName(components),
+            sites: site == nil ? nil : [site!],
+            site: site,
             city: components["city"].string,
             state: components["state_code"].string,
             countryCode: components["country_code"].string,

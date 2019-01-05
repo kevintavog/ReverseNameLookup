@@ -81,6 +81,7 @@ for e in adminElements! {
                     components.insert(contentsOf: sites.map { $0.name }, at: 0)
 
                     return Placename(
+                        sites: sites.count == 0 ? nil : sites.map { $0.name },
                         site: smallestSite,
                         city: city,
                         state: state,
@@ -92,12 +93,13 @@ for e in adminElements! {
         }
 
         return Placename(
-                site: nil,
-                city: nil,
-                state: nil,
-                countryCode: nil,
-                countryName: nil,
-                fullDescription: "")
+            sites: nil,
+            site: nil,
+            city: nil,
+            state: nil,
+            countryCode: nil,
+            countryName: nil,
+            fullDescription: "")
     }
 
     func getState(_ countryCode: String, _ json: JSON) -> String? {
@@ -314,7 +316,7 @@ Logger.log("output: \(outJson)")
     func filterResponse(_ json: JSON) -> JSON {
         var filteredJson = JSON()
         for (key, keyJson):(String, JSON) in json {
-            if !isIgnoredKey(key) {
+            if !isIgnoredKey(key) && !isIgnoredKeyAndValue(key, keyJson) {
                 if let _ = keyJson.array {
                     var items = [JSON]()
                     for (_, indexJson):(String, JSON) in keyJson {
@@ -330,6 +332,17 @@ Logger.log("output: \(outJson)")
         }
 
         return filteredJson
+    }
+
+    func isIgnoredKeyAndValue(_ key: String, _ json: JSON) -> Bool {
+        // Somehow, a few values come across as booleans periodically. These ought to be doubles, but ??
+        if (key == "minlat" || key == "maxlat" || key == "minlon" || key == "maxlon") && json.bool != nil {
+            return true
+        }
+        if key == "version" && json.bool != nil {
+            return true
+        }
+        return false
     }
 
     func isIgnoredKey(_ key: String) -> Bool {

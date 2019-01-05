@@ -58,8 +58,10 @@ class FoursquareLocationToPlacename : ToPlacenameBase {
             .sorted(by: { $0["location"]["distance"].intValue < $1["location"]["distance"].intValue })
 
         let venue = sorted.count > 0 ? sorted[0] : rawVenues[0]
+        let site = getSiteName(venue)
         return Placename(
-            site: getSiteName(venue),
+            sites: site == nil ? nil : [site!],
+            site: site,
             city: venue["location"]["city"].string,
             state: venue["location"]["state"].string,
             countryCode: venue["location"]["cc"].string,

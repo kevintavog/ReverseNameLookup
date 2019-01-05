@@ -27,7 +27,7 @@ Logger.log("fromSource exception: \(error)")
                 do {
                     try saveToCache(latitude, longitude, response!)
                 } catch {
-                    Logger.log("Caching of \(latitude), \(longitude) failed: \(error)")
+                    Logger.log("Caching of \(latitude), \(longitude) failed: \(error), data: \(response!)")
                 }
             }
         }

@@ -35,6 +35,7 @@ class OSMLocationToPlacename : ToPlacenameBase {
         }
 
         return Placename(
+            sites: site == nil ? nil : [site!],
             site: site,
             city: city,
             state: state,

@@ -31,6 +31,7 @@ class MapzenLocationToPlacename: ToPlacenameBase {
         let city = cityName(properties)
 
         return Placename(
+            sites: nil,
             site: nil,
             city: city,
             state: properties["region_a"].string,

@@ -52,6 +52,7 @@ class AzureLocationToPlacename: ToPlacenameBase {
         }
 
         return Placename(
+            sites: nil,
             site: nil,
             city: city,
             state: firstAddress["countrySubdivision"].string,
