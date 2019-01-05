@@ -60,7 +60,7 @@ Logger.log("overpass error: \(error)")
         let bestState = stateFromAll(overpassPlacename, azureJson, openCageDataJson, bestCountryCode)
         let bestCountryName = countryNameFromAll(overpassPlacename, azureJson, openCageDataJson, bestCountryCode)
         let (bestSite, allSites) = siteFromAll(overpassPlacename, azureJson, openCageDataJson, bestCity)
-        let bestDescription = descriptionFromAll(overpassPlacename, azureJson, openCageDataJson)
+        let bestFullDescription = descriptionFromAll(overpassPlacename, azureJson, openCageDataJson)
         if bestSite == bestCity {
             bestCity = nil
         }
@@ -72,7 +72,7 @@ Logger.log("overpass error: \(error)")
             state: bestState,
             countryCode: bestCountryCode,
             countryName: bestCountryName,
-            fullDescription: bestDescription)
+            fullDescription: bestFullDescription)
     }
 
     func testFrom(latitude: Double, longitude: Double) throws -> [String:Any] {
@@ -89,15 +89,7 @@ Logger.log("overpass error: \(error)")
 
         do {
             (azurePlacename, azureJson) = try AzureLocationToPlacename().from(latitude: latitude, longitude: longitude)
-            response["azure"] = [
-                "city": azurePlacename.city ?? "",
-                "state": azurePlacename.state ?? "",
-                "countryCode": azurePlacename.countryCode ?? "",
-                "countryName": azurePlacename.countryName ?? "",
-                "description": azurePlacename.description,
-                "fullDescription": azurePlacename.fullDescription
-            ]
-
+            response["azure"] = toDictionary(azurePlacename)
             response["azure_results"] = azureJson["addresses"]
         } catch {
 Logger.log("azure test error: \(error)")
@@ -106,17 +98,7 @@ Logger.log("azure test error: \(error)")
 
         do {
             (foursquarePlacename, foursquareJson) = try FoursquareLocationToPlacename().from(latitude: latitude, longitude: longitude)
-            response["foursquare"] = [
-                "site": foursquarePlacename.site ?? "",
-                "city": foursquarePlacename.city ?? "",
-                "state": foursquarePlacename.state ?? "",
-                "countryCode": foursquarePlacename.countryCode ?? "",
-                "countryName": foursquarePlacename.countryName ?? "",
-                "description": foursquarePlacename.description,
-                "fullDescription": foursquarePlacename.fullDescription
-            ]
-
-            response["foursquare_compact"] = foursquareJson["compact_venues"]
+            response["foursquare"] = toDictionary(foursquarePlacename)
         } catch {
 Logger.log("foursquare test error: \(error)")
         }
@@ -124,15 +106,7 @@ Logger.log("foursquare test error: \(error)")
 
         do {
             (openCageDataPlacename, openCageDataJson) = try OpenCageDataLocationToPlacename().from(latitude: latitude, longitude: longitude)
-            response["ocd"] = [
-                "city": openCageDataPlacename.city ?? "",
-                "state": openCageDataPlacename.state ?? "",
-                "countryCode": openCageDataPlacename.countryCode ?? "",
-                "countryName": openCageDataPlacename.countryName ?? "",
-                "description": openCageDataPlacename.description,
-                "fullDescription": openCageDataPlacename.fullDescription
-            ]
-
+            response["ocd"] = toDictionary(openCageDataPlacename)
             if openCageDataJson["results"].exists() {
                 response["ocd_results"] = openCageDataJson["results"]
             }
@@ -142,17 +116,7 @@ Logger.log("ocd test error: \(error)")
 
         do {
             (overpassPlacename, overpassJson) = try OverpassLocationToPlacename().from(latitude: latitude, longitude: longitude)
-            response["overpass"] = [
-                "sites": overpassPlacename.sites ?? [String](),
-                "site": overpassPlacename.site ?? "",
-                "city": overpassPlacename.city ?? "",
-                "state": overpassPlacename.state ?? "",
-                "countryCode": overpassPlacename.countryCode ?? "",
-                "countryName": overpassPlacename.countryName ?? "",
-                "description": overpassPlacename.description,
-                "fullDescription": overpassPlacename.fullDescription
-            ]
-
+            response["overpass"] = toDictionary(overpassPlacename)
             response["overpass_elements"] = overpassJson["elements"]
         } catch {
 Logger.log("overpass test error: \(error)")
@@ -163,10 +127,12 @@ Logger.log("overpass test error: \(error)")
         let bestState = stateFromAll(overpassPlacename, azureJson, openCageDataJson, bestCountryCode)
         let bestCountryName = countryNameFromAll(overpassPlacename, azureJson, openCageDataJson, bestCountryCode)
         let (bestSite, allSites) = siteFromAll(overpassPlacename, azureJson, openCageDataJson, bestCity)
+        let bestFullDescription = descriptionFromAll(overpassPlacename, azureJson, openCageDataJson)
 
         if bestSite == bestCity {
             bestCity = nil
         }
+        let siteDescription = allSites != nil ? allSites!.compactMap { $0 }.joined(separator: ", ") : nil
         response["best"] = [
             "sites": allSites ?? [String](),
             "site": bestSite ?? "",
@@ -174,10 +140,24 @@ Logger.log("overpass test error: \(error)")
             "state": bestState ?? "",
             "countryCode": bestCountryCode ?? "",
             "countryName": bestCountryName ?? "",
-            "description": [bestSite, bestCity, bestState, bestCountryName].compactMap( { $0 }).joined(separator: ", ")
+            "fullDescription": bestFullDescription,
+            "description": [siteDescription, bestCity, bestState, bestCountryName].compactMap( { $0 }).joined(separator: ", ")
         ]
 
         return response
+    }
+
+    func toDictionary(_ placename: Placename) -> [String: Any] {
+        return [
+            "sites": placename.sites ?? [String](),
+            "site": placename.site ?? "",
+            "city": placename.city ?? "",
+            "state": placename.state ?? "",
+            "countryCode": placename.countryCode ?? "",
+            "countryName": placename.countryName ?? "",
+            "description": placename.description,
+            "fullDescription": placename.fullDescription
+        ]
     }
 
     // Utilize all providers, trying to come up with the best name possible
