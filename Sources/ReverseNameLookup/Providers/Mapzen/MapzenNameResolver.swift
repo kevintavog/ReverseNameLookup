@@ -1,7 +1,6 @@
 import Foundation
 import SwiftyJSON
 
-
 class MapzenNameResolver {
     let baseAddress = "https://search.mapzen.com/v1/reverse?api_key=%1$s&size=5&point.lat=%2$lf&point.lon=%3$lf"
 

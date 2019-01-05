@@ -1,7 +1,7 @@
 import Foundation
+import SwiftyJSON
 
 import PerfectHTTP
-import SwiftyJSON
 
 
 class Handlers {

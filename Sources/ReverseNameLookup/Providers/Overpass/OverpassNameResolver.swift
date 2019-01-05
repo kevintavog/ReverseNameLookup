@@ -1,7 +1,6 @@
 import Foundation
 import SwiftyJSON
 
-
 class OverpassNameResolver {
     let baseAddress = "http://overpass-api.de/api/interpreter"
 

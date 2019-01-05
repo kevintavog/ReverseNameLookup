@@ -1,7 +1,6 @@
 import Foundation
 import SwiftyJSON
 
-
 class AzureNameResolver {
     let baseAddress = "https://atlas.microsoft.com/search/address/reverse/json?subscription-key=%1$s&api-version=1.0&query=%2$lf,%3$lf&radius=500&language=en-US"
 

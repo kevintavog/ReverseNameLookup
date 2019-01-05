@@ -1,7 +1,6 @@
 import Foundation
 import SwiftyJSON
 
-
 class AzureLocationToPlacename: ToPlacenameBase {
 
     let cacheResolver = AzureCachedNameResolver()

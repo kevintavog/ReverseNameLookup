@@ -1,7 +1,6 @@
 import Foundation
 import SwiftyJSON
 
-
 class MapzenLocationToPlacename: ToPlacenameBase {
 
     let cacheResolver = MapzenCachedNameResolver()

@@ -1,7 +1,6 @@
 import Foundation
 import SwiftyJSON
 
-
 class FoursquareLocationToPlacename : ToPlacenameBase {
 
     let cacheResolver = FoursquareCachedNameResolver()

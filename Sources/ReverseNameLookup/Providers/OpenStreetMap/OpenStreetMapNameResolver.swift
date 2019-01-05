@@ -1,7 +1,6 @@
 import Foundation
 import SwiftyJSON
 
-
 class OpenStreetMapNameResolver {
     let baseAddress = "http://open.mapquestapi.com/nominatim/v1/reverse?key=%1$s&format=json&lat=%2$lf&lon=%3$lf&addressdetails=1&zoom=20&accept-language=en-us"
 

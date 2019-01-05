@@ -1,7 +1,6 @@
 import Foundation
 import SwiftyJSON
 
-
 class OSMLocationToPlacename : ToPlacenameBase {
 
     let cacheResolver = OpenStreetMapCachedNameResolver()

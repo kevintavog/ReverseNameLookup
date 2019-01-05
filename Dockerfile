@@ -5,7 +5,8 @@ RUN apt-get update; \
 
 COPY . /code
 
-RUN cd /code && swift build -c release && cp /code/.build/release/ReverseNameLookup /ReverseNameLookup && cd / && rm -Rf /code
+# RUN cd /code && swift build -c release && cp /code/.build/release/ReverseNameLookup /ReverseNameLookup && cd / && rm -Rf /code
+RUN cd /code && swift build && cp /code/.build/debug/ReverseNameLookup /ReverseNameLookup && cd / && rm -Rf /code
 
 EXPOSE 8888
 ENTRYPOINT ["/ReverseNameLookup"]

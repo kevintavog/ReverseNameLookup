@@ -1,7 +1,6 @@
 import Foundation
 import SwiftyJSON
 
-
 class OpenCageDataLocationToPlacename : ToPlacenameBase{
 
     let cacheResolver = OpenCageDataCachedNameResolver()

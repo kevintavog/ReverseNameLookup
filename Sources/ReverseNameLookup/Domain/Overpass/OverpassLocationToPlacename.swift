@@ -307,6 +307,7 @@ static func filterFile(_ filename: String) throws {
     do {
         let contents = try Data(contentsOf: URL(fileURLWithPath: filename))
         let inJson = try JSON(data: contents)
+// Logger.log("input: \(inJson)")
         let outJson = OverpassLocationToPlacename().filterResponse(inJson)
 Logger.log("output: \(outJson)")
     }
@@ -335,6 +336,7 @@ Logger.log("output: \(outJson)")
     }
 
     func isIgnoredKeyAndValue(_ key: String, _ json: JSON) -> Bool {
+        return false
         // Somehow, a few values come across as booleans periodically. These ought to be doubles, but ??
         if (key == "minlat" || key == "maxlat" || key == "minlon" || key == "maxlon") && json.bool != nil {
             return true

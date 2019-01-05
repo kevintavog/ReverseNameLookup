@@ -1,7 +1,6 @@
 import Foundation
 import SwiftyJSON
 
-
 class OpenCageDataNameResolver {
     let baseAddress = "https://api.opencagedata.com/geocode/v1/json?key=%1$s&no_annotations=1&q=%2$lf,%3$lf"
 
