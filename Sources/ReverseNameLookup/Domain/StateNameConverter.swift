@@ -1,21 +1,5 @@
 
 struct StateNameConverter {
-    static func toName(_ addressInfo: OSMAddress) -> String? {
-        guard let countryCode = addressInfo.country_code, let stateName = addressInfo.state else {
-            return addressInfo.state
-        }
-        guard let stateMap = codeToStateMap[countryCode] else {
-            return addressInfo.state
-        }
-
-        guard let state = stateMap[stateName.lowercased()] else {
-            Logger.log("WARNING: Missing entry for '\(stateName)'")
-            return addressInfo.state
-        }
-
-        return state
-    }
-
     static func toName(_ countryCode: String, _ state: String?) -> String? {
         guard let stateName = state else {
             return state
