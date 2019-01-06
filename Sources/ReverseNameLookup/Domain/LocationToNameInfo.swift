@@ -191,9 +191,17 @@ Logger.log("overpass test error: \(error)")
         //  "university", "viewpoint",
 
         if overpassPlacename.city == nil {
-            names.append(openCageDataComponents["cycleway"].string)
-            names.append(openCageDataComponents["path"].string)
-            names.append(openCageDataComponents["footway"].string)
+            var addSite = true
+
+            // Don't inclue the site if we're in a city
+            if let county = openCageDataComponents["county"].string, let city = openCageDataComponents["city"].string {
+                addSite = county != city
+            }
+            if addSite {
+                names.append(openCageDataComponents["cycleway"].string)
+                names.append(openCageDataComponents["path"].string)
+                names.append(openCageDataComponents["footway"].string)
+            }
         }
 
         // Not all paths are worth including - don't include any in a city

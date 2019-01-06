@@ -224,7 +224,12 @@ diagnostic("'\(si.name): \(si.area)'")
                 site = true
             }
         }
+
         if !site && json["tags"]["leisure"].exists() {
+            site = true
+        }
+
+        if !site && json["tags"]["historic"].exists() {
             site = true
         }
 

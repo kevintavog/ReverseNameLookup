@@ -1,6 +1,9 @@
 import Foundation
 import SwiftyJSON
 
+// For rate limit status, see
+//      http://overpass-api.de/api/status
+
 class OverpassNameResolver {
     let baseAddress = "http://overpass-api.de/api/interpreter"
 
