@@ -16,7 +16,7 @@ public func synchronousHttpPost(_ url: String, _ body: Data) throws -> Data? {
 
     let response = try CURLRequest(
             url,
-            .httpMethod(CURLRequest.HTTPMethod.post),
+            .httpMethod(HTTPMethod.post),
             .addHeader(CURLRequest.Header.Name.contentType, "application/json; charset=UTF-8"),
             .postData([UInt8](body)))
         .perform()
@@ -33,7 +33,7 @@ public func synchronousPlainHttpPost(_ url: String, _ body: String) throws -> Da
     let data = body.data(using: .utf8, allowLossyConversion: false)!
     let response = try CURLRequest(
             url,
-            .httpMethod(CURLRequest.HTTPMethod.post),
+            .httpMethod(HTTPMethod.post),
             .postData([UInt8](data)))
         .perform()
 
@@ -49,7 +49,7 @@ public func synchronousHttpGet(_ url: String) throws -> Data? {
 
     let response = try CURLRequest(
             url,
-            .httpMethod(CURLRequest.HTTPMethod.get))
+            .httpMethod(HTTPMethod.get))
         .perform()
 
     if response.responseCode > 299 {
