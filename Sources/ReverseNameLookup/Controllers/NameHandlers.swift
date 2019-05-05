@@ -16,25 +16,17 @@ class Handlers {
         defer { response.completed() }
 
         do {
-            guard let latParam = request.param(name: "lat") else {
-                Handlers.error(request, response, message: "lat must be specified")
-                return                
+            let (lat, latErr) = asDouble(request, "lat")
+            if latErr != nil {
+                Handlers.error(request, response, message: latErr!)
             }
-            guard let lonParam = request.param(name: "lon") else {
-                Handlers.error(request, response, message: "lon must be specified")
-                return
+            let (lon, lonErr) = asDouble(request, "lon")
+            if lonErr != nil {
+                Handlers.error(request, response, message: lonErr!)
             }
+            let includeCountryName = asOptionaBool(request, "country", false)
 
-            guard let lat = Double(latParam) else {
-                Handlers.error(request, response, message: "lat must be a number")
-                return
-            }
-            guard let lon = Double(lonParam) else {
-                Handlers.error(request, response, message: "lon must be a number")
-                return
-            }
-
-            let placename = try LocationToNameInfo().from(latitude: lat, longitude: lon)
+            let placename = try LocationToNameInfo(includeCountryName: includeCountryName).from(latitude: lat, longitude: lon)
 
             request.scratchPad["description"] = placename.fullDescription
             let encodedData = try JSONEncoder().encode(placename)
@@ -44,31 +36,21 @@ class Handlers {
         }
     }
 
-
     static func testName(request: HTTPRequest, _ response: HTTPResponse) {
         response.setHeader(.contentType, value: "application/json")
         defer { response.completed() }
 
         do {
-            guard let latParam = request.param(name: "lat") else {
-                Handlers.error(request, response, message: "lat must be specified")
-                return                
+            let (lat, latErr) = asDouble(request, "lat")
+            if latErr != nil {
+                Handlers.error(request, response, message: latErr!)
             }
-            guard let lonParam = request.param(name: "lon") else {
-                Handlers.error(request, response, message: "lon must be specified")
-                return
-            }
-
-            guard let lat = Double(latParam) else {
-                Handlers.error(request, response, message: "lat must be a number")
-                return
-            }
-            guard let lon = Double(lonParam) else {
-                Handlers.error(request, response, message: "lon must be a number")
-                return
+            let (lon, lonErr) = asDouble(request, "lon")
+            if lonErr != nil {
+                Handlers.error(request, response, message: lonErr!)
             }
 
-            let placename = try LocationToNameInfo().testFrom(latitude: lat, longitude: lon)
+            let placename = try LocationToNameInfo(includeCountryName: false).testFrom(latitude: lat, longitude: lon)
 
             let encodedData = try JSON(placename).rawData()
             response.setBody(string: String(data: encodedData, encoding: .utf8)!)
@@ -76,4 +58,27 @@ class Handlers {
             Handlers.error(request, response, error)
         }
     }
+
+    static func asDouble(_ request: HTTPRequest, _ name: String) -> (Double, String?) {
+        guard let param = request.param(name: name) else {
+            return (0, "\(name) must be specified")
+        }
+
+        guard let val = Double(param) else {
+            return (0, "\(name) must be a number")
+        }
+        return (val, nil)
+    }
+
+    static func asOptionaBool(_ request: HTTPRequest, _ name: String, _ defaultValue: Bool) -> Bool {
+        guard let param = request.param(name: name) else {
+            return defaultValue
+        }
+
+        guard let val = Bool(param) else {
+            return defaultValue
+        }
+        return val
+    }
+
 }

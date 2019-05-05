@@ -208,8 +208,10 @@ for e in adminElements! {
                         name: name,
                         minLat: itemJson["bounds"]["minlat"].doubleValue, minLon: itemJson["bounds"]["minlon"].doubleValue,
                         maxLat: itemJson["bounds"]["maxlat"].doubleValue, maxLon: itemJson["bounds"]["maxlon"].doubleValue)
-diagnostic("'\(si.name): \(si.area)'")
-                    sites.append(si)
+// diagnostic("'\(si.name): \(si.area)'")
+                    if !sites.contains(where: { $0.name == si.name }) {
+                        sites.append(si)
+                    }
                 }
             }
         }

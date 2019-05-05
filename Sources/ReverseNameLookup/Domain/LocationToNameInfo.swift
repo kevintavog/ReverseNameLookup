@@ -12,6 +12,12 @@ class LocationToNameInfo {
         case NotImplemented(String)
     }
 
+    let alwaysInludeCountryName: Bool
+
+    init(includeCountryName: Bool) {
+        self.alwaysInludeCountryName = includeCountryName
+    }
+
 
     func from(latitude: Double, longitude: Double) throws -> Placename {
         var azureJson = JSON()
@@ -295,9 +301,13 @@ Logger.log("overpass test error: \(error)")
 
     func countryNameFromAll(_ overpassPlacename: Placename, _ azureJson: JSON, _ openCageDataJson: JSON, _ countryCode: String?) -> String? {
 
+        
         switch countryCode ?? "" {
             case "us":
-                return nil
+                if !alwaysInludeCountryName  {
+                    return nil
+                }
+                break
             case "":
                 return azureJson["addresses"][0]["address"]["country"].string
             default:
