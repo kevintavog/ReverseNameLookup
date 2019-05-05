@@ -1,7 +1,7 @@
 import SwiftyJSON
 
 class ToPlacenameBase {
-    func from(latitude: Double, longitude: Double) throws -> (Placename, JSON) {
+    func from(latitude: Double, longitude: Double, cacheOnly: Bool = false) throws -> (Placename, JSON) {
         var response: JSON?
 
         do {
@@ -13,7 +13,7 @@ Logger.log("cache exception: \(error)")
         }
 
         // Not in the cache, get it from the source
-        if response == nil {
+        if !cacheOnly && response == nil {
             do {
                 try Logger.log("Getting location from source: \(latitude),\(longitude) - \(placenameIdentifier())")
                 response = try fromSource(latitude, longitude)

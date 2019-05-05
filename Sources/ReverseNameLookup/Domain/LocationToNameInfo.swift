@@ -19,7 +19,7 @@ class LocationToNameInfo {
     }
 
 
-    func from(latitude: Double, longitude: Double) throws -> Placename {
+    func from(latitude: Double, longitude: Double, cacheOnly: Bool = false) throws -> Placename {
         var azureJson = JSON()
         var foursquareJson = JSON()
         var openCageDataJson = JSON()
@@ -29,7 +29,7 @@ class LocationToNameInfo {
         let queue = Queuer(name: "calls")
         queue.addOperation {
             do {
-                (_, azureJson) = try AzureLocationToPlacename().from(latitude: latitude, longitude: longitude)
+                (_, azureJson) = try AzureLocationToPlacename().from(latitude: latitude, longitude: longitude, cacheOnly: cacheOnly)
             } catch {
 Logger.log("azure error: \(error)")
             }
@@ -37,7 +37,7 @@ Logger.log("azure error: \(error)")
 
         queue.addOperation {
             do {
-                (_, foursquareJson) = try FoursquareLocationToPlacename().from(latitude: latitude, longitude: longitude)
+                (_, foursquareJson) = try FoursquareLocationToPlacename().from(latitude: latitude, longitude: longitude, cacheOnly: cacheOnly)
             } catch {
 Logger.log("foursquare error: \(error)")
             }
@@ -45,7 +45,7 @@ Logger.log("foursquare error: \(error)")
 
         queue.addOperation {
             do {
-                (_, openCageDataJson) = try OpenCageDataLocationToPlacename().from(latitude: latitude, longitude: longitude)
+                (_, openCageDataJson) = try OpenCageDataLocationToPlacename().from(latitude: latitude, longitude: longitude, cacheOnly: cacheOnly)
             } catch {
 Logger.log("opencagedata error: \(error)")
             }
@@ -53,7 +53,7 @@ Logger.log("opencagedata error: \(error)")
 
         queue.addOperation {
             do {
-                (overpassPlacename, _) = try OverpassLocationToPlacename().from(latitude: latitude, longitude: longitude)
+                (overpassPlacename, _) = try OverpassLocationToPlacename().from(latitude: latitude, longitude: longitude, cacheOnly: cacheOnly)
             } catch {
 Logger.log("overpass error: \(error)")
             }

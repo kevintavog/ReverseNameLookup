@@ -36,6 +36,31 @@ class Handlers {
         }
     }
 
+    static func getCachedName(request: HTTPRequest, _ response: HTTPResponse) {
+        response.setHeader(.contentType, value: "application/json")
+        defer { response.completed() }
+
+        do {
+            let (lat, latErr) = asDouble(request, "lat")
+            if latErr != nil {
+                Handlers.error(request, response, message: latErr!)
+            }
+            let (lon, lonErr) = asDouble(request, "lon")
+            if lonErr != nil {
+                Handlers.error(request, response, message: lonErr!)
+            }
+            let includeCountryName = asOptionaBool(request, "country", false)
+
+            let placename = try LocationToNameInfo(includeCountryName: includeCountryName).from(latitude: lat, longitude: lon, cacheOnly: true)
+
+            request.scratchPad["description"] = placename.fullDescription
+            let encodedData = try JSONEncoder().encode(placename)
+            response.setBody(string: String(data: encodedData, encoding: .utf8)!)
+        } catch {
+            Handlers.error(request, response, error)
+        }
+    }
+
     static func testName(request: HTTPRequest, _ response: HTTPResponse) {
         response.setHeader(.contentType, value: "application/json")
         defer { response.completed() }
