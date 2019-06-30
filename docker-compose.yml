@@ -3,7 +3,7 @@ services:
 
   reversenamelookup:
     container_name: reversenamelookup
-    image: reversenamelookup
+    image: docker.rangic:6000/reversenamelookup:1561912472
     ports:
       - 8888:8888
     volumes:

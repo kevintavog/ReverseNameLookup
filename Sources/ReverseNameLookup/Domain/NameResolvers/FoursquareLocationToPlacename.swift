@@ -31,14 +31,14 @@ class FoursquareLocationToPlacename : ToPlacenameBase {
         return "Foursquare"
     }
 
-    override func fromCache(_ latitude: Double, _ longitude: Double) throws -> JSON? {
-        var cachedJson = try cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: 3)
+    override func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
+        var cachedJson = try cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: distance)
         cachedJson["compact_venues"] = FoursquareLocationToPlacename.toCompactVenues(cachedJson, maxDistance: 100, discard: true)
         return cachedJson
     }
 
-    override func fromSource(_ latitude: Double, _ longitude: Double) throws -> JSON? {
-        return try FoursquareNameResolver().resolve(latitude, longitude, maxDistanceInMeters: 3)
+    override func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
+        return try FoursquareNameResolver().resolve(latitude, longitude, maxDistanceInMeters: distance)
     }
 
     override func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) throws {

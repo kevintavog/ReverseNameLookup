@@ -9,12 +9,12 @@ class AzureLocationToPlacename: ToPlacenameBase {
         return "Azure"
     }
 
-    override func fromCache(_ latitude: Double, _ longitude: Double) throws -> JSON? {
-        return try cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: 3)
+    override func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
+        return try cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: distance)
     }
 
-    override func fromSource(_ latitude: Double, _ longitude: Double) throws -> JSON? {
-        return try AzureNameResolver().resolve(latitude, longitude, maxDistanceInMeters: 3)
+    override func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
+        return try AzureNameResolver().resolve(latitude, longitude, maxDistanceInMeters: distance)
     }
 
     override func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) throws {

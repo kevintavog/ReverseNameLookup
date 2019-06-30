@@ -26,7 +26,8 @@ class Handlers {
             }
             let includeCountryName = asOptionaBool(request, "country", false)
 
-            let placename = try LocationToNameInfo(includeCountryName: includeCountryName).from(latitude: lat, longitude: lon)
+            let placename = try LocationToNameInfo(includeCountryName: includeCountryName)
+                .from(latitude: lat, longitude: lon, distance: 3)
 
             request.scratchPad["description"] = placename.fullDescription
             let encodedData = try JSONEncoder().encode(placename)
@@ -50,8 +51,13 @@ class Handlers {
                 Handlers.error(request, response, message: lonErr!)
             }
             let includeCountryName = asOptionaBool(request, "country", false)
+            var (distance, err) = asDouble(request, "distance")
+            if err != nil {
+                distance = 500.0
+            }
 
-            let placename = try LocationToNameInfo(includeCountryName: includeCountryName).from(latitude: lat, longitude: lon, cacheOnly: true)
+            let placename = try LocationToNameInfo(includeCountryName: includeCountryName)
+                .from(latitude: lat, longitude: lon, distance: Int(distance), cacheOnly: true)
 
             request.scratchPad["description"] = placename.fullDescription
             let encodedData = try JSONEncoder().encode(placename)

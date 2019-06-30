@@ -21,13 +21,13 @@ class OverpassLocationToPlacename : ToPlacenameBase{
         return "Overpass"
     }
 
-    override func fromCache(_ latitude: Double, _ longitude: Double) throws -> JSON? {
-        let c =  try cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: 3)
+    override func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
+        let c =  try cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: distance)
         return c
     }
 
-    override func fromSource(_ latitude: Double, _ longitude: Double) throws -> JSON? {
-        let json = try OverpassNameResolver().resolve(latitude, longitude, maxDistanceInMeters: 3)
+    override func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
+        let json = try OverpassNameResolver().resolve(latitude, longitude, maxDistanceInMeters: distance)
         if let real = json {
             return filterResponse(real)
         }

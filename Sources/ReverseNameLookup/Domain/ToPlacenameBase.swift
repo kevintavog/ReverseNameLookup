@@ -1,11 +1,11 @@
 import SwiftyJSON
 
 class ToPlacenameBase {
-    func from(latitude: Double, longitude: Double, cacheOnly: Bool = false) throws -> (Placename, JSON) {
+    func from(latitude: Double, longitude: Double, distance: Int, cacheOnly: Bool = false) throws -> (Placename, JSON) {
         var response: JSON?
 
         do {
-            response = try fromCache(latitude, longitude)
+            response = try fromCache(latitude, longitude, distance)
         } catch NameResolverError.NoMatches {
             // The cache doesn't have this entry, no value in logging that info
         }  catch {
@@ -16,7 +16,7 @@ Logger.log("cache exception: \(error)")
         if !cacheOnly && response == nil {
             do {
                 try Logger.log("Getting location from source: \(latitude),\(longitude) - \(placenameIdentifier())")
-                response = try fromSource(latitude, longitude)
+                response = try fromSource(latitude, longitude, distance)
             } catch {
 Logger.log("fromSource exception: \(error)")
             }
@@ -42,11 +42,11 @@ Logger.log("fromSource exception: \(error)")
         throw LocationToNameInfo.Error.NotImplemented("'placenameIdentifier' is not implemented in the derived class")
     }
 
-    func fromCache(_ latitude: Double, _ longitude: Double) throws -> JSON? {
+    func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
         throw LocationToNameInfo.Error.NotImplemented("'fromCache' is not implemented in the derived class")
     }
 
-    func fromSource(_ latitude: Double, _ longitude: Double) throws -> JSON? {
+    func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
         throw LocationToNameInfo.Error.NotImplemented("'fromSource' is not implemented in the derived class")
     }
 

@@ -19,7 +19,7 @@ class LocationToNameInfo {
     }
 
 
-    func from(latitude: Double, longitude: Double, cacheOnly: Bool = false) throws -> Placename {
+    func from(latitude: Double, longitude: Double, distance: Int, cacheOnly: Bool = false) throws -> Placename {
         var azureJson = JSON()
         var foursquareJson = JSON()
         var openCageDataJson = JSON()
@@ -29,7 +29,8 @@ class LocationToNameInfo {
         let queue = Queuer(name: "calls")
         queue.addOperation {
             do {
-                (_, azureJson) = try AzureLocationToPlacename().from(latitude: latitude, longitude: longitude, cacheOnly: cacheOnly)
+                (_, azureJson) = try AzureLocationToPlacename()
+                    .from(latitude: latitude, longitude: longitude, distance: distance, cacheOnly: cacheOnly)
             } catch {
 Logger.log("azure error: \(error)")
             }
@@ -37,7 +38,8 @@ Logger.log("azure error: \(error)")
 
         queue.addOperation {
             do {
-                (_, foursquareJson) = try FoursquareLocationToPlacename().from(latitude: latitude, longitude: longitude, cacheOnly: cacheOnly)
+                (_, foursquareJson) = try FoursquareLocationToPlacename()
+                    .from(latitude: latitude, longitude: longitude, distance: distance, cacheOnly: cacheOnly)
             } catch {
 Logger.log("foursquare error: \(error)")
             }
@@ -45,7 +47,8 @@ Logger.log("foursquare error: \(error)")
 
         queue.addOperation {
             do {
-                (_, openCageDataJson) = try OpenCageDataLocationToPlacename().from(latitude: latitude, longitude: longitude, cacheOnly: cacheOnly)
+                (_, openCageDataJson) = try OpenCageDataLocationToPlacename()
+                    .from(latitude: latitude, longitude: longitude, distance: distance, cacheOnly: cacheOnly)
             } catch {
 Logger.log("opencagedata error: \(error)")
             }
@@ -53,7 +56,8 @@ Logger.log("opencagedata error: \(error)")
 
         queue.addOperation {
             do {
-                (overpassPlacename, _) = try OverpassLocationToPlacename().from(latitude: latitude, longitude: longitude, cacheOnly: cacheOnly)
+                (overpassPlacename, _) = try OverpassLocationToPlacename()
+                    .from(latitude: latitude, longitude: longitude, distance: distance, cacheOnly: cacheOnly)
             } catch {
 Logger.log("overpass error: \(error)")
             }
@@ -94,7 +98,8 @@ Logger.log("overpass error: \(error)")
 
 
         do {
-            (azurePlacename, azureJson) = try AzureLocationToPlacename().from(latitude: latitude, longitude: longitude)
+            (azurePlacename, azureJson) = try AzureLocationToPlacename()
+                .from(latitude: latitude, longitude: longitude, distance: 3)
             response["azure"] = toDictionary(azurePlacename)
             response["azure_results"] = azureJson["addresses"]
         } catch {
@@ -103,7 +108,8 @@ Logger.log("azure test error: \(error)")
 
 
         do {
-            (foursquarePlacename, foursquareJson) = try FoursquareLocationToPlacename().from(latitude: latitude, longitude: longitude)
+            (foursquarePlacename, foursquareJson) = try FoursquareLocationToPlacename()
+                .from(latitude: latitude, longitude: longitude, distance: 3)
             response["foursquare"] = toDictionary(foursquarePlacename)
         } catch {
 Logger.log("foursquare test error: \(error)")
@@ -111,7 +117,8 @@ Logger.log("foursquare test error: \(error)")
 
 
         do {
-            (openCageDataPlacename, openCageDataJson) = try OpenCageDataLocationToPlacename().from(latitude: latitude, longitude: longitude)
+            (openCageDataPlacename, openCageDataJson) = try OpenCageDataLocationToPlacename()
+                .from(latitude: latitude, longitude: longitude, distance: 3)
             response["ocd"] = toDictionary(openCageDataPlacename)
             if openCageDataJson["results"].exists() {
                 response["ocd_results"] = openCageDataJson["results"]
@@ -121,7 +128,8 @@ Logger.log("ocd test error: \(error)")
         }
 
         do {
-            (overpassPlacename, overpassJson) = try OverpassLocationToPlacename().from(latitude: latitude, longitude: longitude)
+            (overpassPlacename, overpassJson) = try OverpassLocationToPlacename()
+                .from(latitude: latitude, longitude: longitude, distance: 3)
             response["overpass"] = toDictionary(overpassPlacename)
             response["overpass_elements"] = overpassJson["elements"]
         } catch {
@@ -285,7 +293,7 @@ Logger.log("overpass test error: \(error)")
                     azureJson["addresses"][0]["address"]["countrySubdivision"].string
                 ]
 
-            case "be", "mx":
+            case "be", "fr", "mx":
                 return nil
 
             case "ca", "us":
