@@ -280,7 +280,6 @@ Logger.log("overpass test error: \(error)")
     }
 
     func stateFromAll(_ overpassPlacename: Placename, _ azureJson: JSON, _ openCageDataJson: JSON, _ countryCode: String?) -> String? {
-
         var names = [
             openCageDataJson["results"][0]["components"]["state_code"].string,
         ]
@@ -308,14 +307,12 @@ Logger.log("overpass test error: \(error)")
     }
 
     func countryNameFromAll(_ overpassPlacename: Placename, _ azureJson: JSON, _ openCageDataJson: JSON, _ countryCode: String?) -> String? {
-
-        
         switch countryCode ?? "" {
             case "us":
                 if !alwaysInludeCountryName  {
                     return nil
                 }
-                break
+                return "USA"    // Override some old data "United States of America"
             case "":
                 return azureJson["addresses"][0]["address"]["country"].string
             default:
