@@ -203,9 +203,13 @@ for e in adminElements! {
         for (_, itemJson):(String, JSON) in json["elements"] {
 
             if let name = itemJson["tags"]["name:en"].string ?? itemJson["tags"]["name"].string {
+                var shortName = name
+                if (itemJson["tags"]["amenity"].string ?? "") == "university" {
+                    shortName = itemJson["tags"]["short_name"].string ?? name
+                }
                 if isSite(itemJson) {
                     let si = SiteInfo(
-                        name: name,
+                        name: shortName,
                         minLat: itemJson["bounds"]["minlat"].doubleValue, minLon: itemJson["bounds"]["minlon"].doubleValue,
                         maxLat: itemJson["bounds"]["maxlat"].doubleValue, maxLon: itemJson["bounds"]["maxlon"].doubleValue)
 // diagnostic("'\(si.name): \(si.area)'")
@@ -221,10 +225,10 @@ for e in adminElements! {
 
     func isSite(_ json: JSON) -> Bool {
         var site = false
-        if let tourism = json["tags"]["tourism"].string {
-            if tourism != "hotel" {
-                site = true
-            }
+        let elementType = json["type"].string ?? ""
+        let tourism = json["tags"]["tourism"].string ?? ""
+        if !tourism.isEmpty && tourism != "hotel" {
+            site = true
         }
 
         if !site && json["tags"]["leisure"].exists() {
@@ -232,7 +236,11 @@ for e in adminElements! {
         }
 
         if !site && json["tags"]["historic"].exists() {
-            site = true
+            if elementType != "relation" || json["tags"]["building"].exists() {
+                if tourism != "hotel" {
+                    site = true
+                }
+            }
         }
 
         if !site, let amenity = json["tags"]["amenity"].string {

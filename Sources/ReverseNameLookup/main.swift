@@ -1,6 +1,3 @@
-//
-//
-
 import PerfectLib
 import PerfectHTTP
 import PerfectHTTPServer
@@ -11,15 +8,6 @@ let server = HTTPServer()
 let logger = RangicLogger()
 server.setRequestFilters([(logger, .high)])
 server.setResponseFilters([(logger, .low)])
-
-/*
-do {
-	try OverpassLocationToPlacename.filterFile("linux-overpass.json")
-} catch {
-	fatalError("\(error)")
-}
-*/
-
 
 var routes = makeJSONRoutes()
 routes.add(method: .get, uri: "/status", handler: statusHandler)
