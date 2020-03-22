@@ -1,5 +1,4 @@
 import Foundation
-import SwiftyJSON
 
 // For rate limit status, see
 //      http://overpass-api.de/api/status

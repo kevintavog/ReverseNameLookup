@@ -1,5 +1,4 @@
 import Foundation
-import SwiftyJSON
 
 class OpenCageDataLocationToPlacename : ToPlacenameBase{
 

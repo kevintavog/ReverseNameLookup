@@ -42,8 +42,8 @@
         "repositoryURL": "https://github.com/PerfectlySoft/Perfect-HTTP.git",
         "state": {
           "branch": null,
-          "revision": "a730fecd51cc7adca74adb260f5bcc0ad1378583",
-          "version": "3.2.6"
+          "revision": "122affd0bb5090c61bdc1e50e7f32ab6457d228e",
+          "version": "3.3.0"
         }
       },
       {
@@ -78,8 +78,8 @@
         "repositoryURL": "https://github.com/PerfectlySoft/Perfect-Thread.git",
         "state": {
           "branch": null,
-          "revision": "fbbd7aec0ebe06fbeed58da54153226dd7613c4a",
-          "version": "3.0.6"
+          "revision": "a50b9a33f08fce638f33ae3121613fe499cc23ec",
+          "version": "3.0.7"
         }
       },
       {
@@ -96,17 +96,8 @@
         "repositoryURL": "https://github.com/FabrizioBrancati/Queuer.git",
         "state": {
           "branch": null,
-          "revision": "2f2c9d1080387d65d77197ec4117afea351fd90f",
-          "version": "2.1.0"
-        }
-      },
-      {
-        "package": "SwiftyJSON",
-        "repositoryURL": "https://github.com/SwiftyJSON/SwiftyJSON.git",
-        "state": {
-          "branch": null,
-          "revision": "2b6054efa051565954e1d2b9da831680026cd768",
-          "version": "4.3.0"
+          "revision": "52515108d0ac4616d9e15ffcc7ad986e300d31ff",
+          "version": "2.1.1"
         }
       }
     ]

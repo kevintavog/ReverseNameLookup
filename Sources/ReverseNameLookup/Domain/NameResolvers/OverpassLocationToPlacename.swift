@@ -1,5 +1,4 @@
 import Foundation
-import SwiftyJSON
 
 struct SiteInfo {
     let name: String

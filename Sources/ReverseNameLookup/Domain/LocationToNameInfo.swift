@@ -1,6 +1,5 @@
 import Foundation
 import Queuer
-import SwiftyJSON
 
 class LocationToNameInfo {
 
@@ -24,6 +23,7 @@ class LocationToNameInfo {
         var foursquareJson = JSON()
         var openCageDataJson = JSON()
         var overpassPlacename: Placename = Placename(sites: nil, site: nil, city: nil, state: nil, countryCode: nil, countryName: nil, fullDescription: "")
+        var overpassJson = JSON()
 
 
         let queue = Queuer(name: "calls")
@@ -56,7 +56,7 @@ Logger.log("opencagedata error: \(error)")
 
         queue.addOperation {
             do {
-                (overpassPlacename, _) = try OverpassLocationToPlacename()
+                (overpassPlacename, overpassJson) = try OverpassLocationToPlacename()
                     .from(latitude: latitude, longitude: longitude, distance: distance, cacheOnly: cacheOnly)
             } catch {
 Logger.log("overpass error: \(error)")
@@ -75,7 +75,9 @@ Logger.log("overpass error: \(error)")
             bestCity = nil
         }
 
-        return Placename(
+        let (latitude, longitude) = location(overpassJson, openCageDataJson, azureJson)
+
+        var placename = Placename(
             sites: allSites,
             site: bestSite,
             city: bestCity,
@@ -83,6 +85,9 @@ Logger.log("overpass error: \(error)")
             countryCode: bestCountryCode,
             countryName: bestCountryName,
             fullDescription: bestFullDescription)
+        placename.latitude = latitude
+        placename.longitude = longitude
+        return placename
     }
 
     func testFrom(latitude: Double, longitude: Double) throws -> [String:Any] {
@@ -173,6 +178,23 @@ Logger.log("overpass test error: \(error)")
             "fullDescription": placename.fullDescription
         ]
     }
+
+    func location(_ overpassJson: JSON, _ openCageDataJson: JSON, _ azureJson: JSON) -> (Double?,Double?) {
+        let locations = [
+            overpassJson["location"],
+            openCageDataJson["location"],
+            azureJson["location"],
+        ]
+
+        for l in locations {
+            if let lat = l["lat"].double {
+                return (lat, l["lon"].double)
+            }
+        }
+
+        return (nil, nil)
+    }
+
 
     // Utilize all providers, trying to come up with the best name possible
     func siteFromAll(_ overpassPlacename: Placename, _ azureJson: JSON, _ openCageDataJson: JSON, _ city: String?) -> (String?,[String]?) {

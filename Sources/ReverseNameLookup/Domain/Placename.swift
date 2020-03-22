@@ -10,6 +10,8 @@ struct Placename : Encodable {
     let state: String?
     let countryCode: String?
     let countryName: String?
+    var latitude: Double?
+    var longitude: Double?
 
     public init(sites: [String]?, site: String?, city: String?, state: String?, countryCode: String?, countryName: String?, fullDescription: String) {
         self.sites = sites

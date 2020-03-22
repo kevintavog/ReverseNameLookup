@@ -1,4 +1,3 @@
-import SwiftyJSON
 
 class ToPlacenameBase {
     func from(latitude: Double, longitude: Double, distance: Int, cacheOnly: Bool = false) throws -> (Placename, JSON) {
