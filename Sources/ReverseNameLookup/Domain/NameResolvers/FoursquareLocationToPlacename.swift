@@ -1,8 +1,16 @@
 import Foundation
+import NIO
+import SwiftyJSON
 
 class FoursquareLocationToPlacename : ToPlacenameBase {
+    let cacheResolver: ElasticSearchCachedNameResolver
 
-    let cacheResolver = ElasticSearchCachedNameResolver(indexName: "foursquare_placenames_cache")
+    override init(eventLoop: EventLoop) {
+        cacheResolver = ElasticSearchCachedNameResolver(
+            eventLoop: eventLoop, indexName: "foursquare_placenames_cache")
+
+        super.init(eventLoop: eventLoop)
+    }
 
     static public func getCity(_ json: JSON) -> String? {
         // Return the most repeated city name of the venues within 2 km
@@ -26,22 +34,25 @@ class FoursquareLocationToPlacename : ToPlacenameBase {
         return nil
     }
 
-    override func placenameIdentifier() throws -> String {
+    override func placenameIdentifier() -> String {
         return "Foursquare"
     }
 
-    override func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
-        var cachedJson = try cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: distance)
-        cachedJson["compact_venues"] = FoursquareLocationToPlacename.toCompactVenues(cachedJson, maxDistance: 100, discard: true)
-        return cachedJson
+    override func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
+        return cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: distance)
+            .flatMap { json in
+                var cached = json
+                cached["compact_venues"] = FoursquareLocationToPlacename.toCompactVenues(json, maxDistance: 100, discard: true)
+                return self.eventLoop.makeSucceededFuture(cached)
+            }
     }
 
-    override func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
-        return try FoursquareNameResolver().resolve(latitude, longitude, maxDistanceInMeters: distance)
+    override func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
+        return FoursquareNameResolver(eventLoop: eventLoop).resolve(latitude, longitude, maxDistanceInMeters: distance)
     }
 
-    override func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) throws {
-        try cacheResolver.cache(latitude, longitude, json)
+    override func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) {
+        cacheResolver.cache(latitude, longitude, json)
     }
 
     override func toPlacename(_ latitude: Double, _ longitude: Double, _ json: JSON) throws -> Placename {

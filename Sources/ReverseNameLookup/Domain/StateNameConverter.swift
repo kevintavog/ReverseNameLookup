@@ -1,5 +1,8 @@
+import Logging
 
 struct StateNameConverter {
+    static let logger = Logger(label: "StateNameConverter")
+
     static func toName(_ countryCode: String, _ state: String?) -> String? {
         guard let stateName = state else {
             return state
@@ -12,7 +15,7 @@ struct StateNameConverter {
             return state
         }
         guard let newName = stateMap[stateName.lowercased()] else {
-            Logger.log("WARNING: Missing entry for '\(stateName)'")
+            logger.warning("Missing entry for '\(stateName)'")
             return state
         }
 

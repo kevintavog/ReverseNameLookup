@@ -1,7 +1,8 @@
 import Foundation
 
+import Vapor
 
-struct Placename : Encodable {
+struct Placename : Content {
     let description: String
     let fullDescription: String
     let sites: [String]?

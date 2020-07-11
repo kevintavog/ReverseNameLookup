@@ -1,7 +1,11 @@
 import Foundation
+import Logging
 
-class Config
-{
+import SwiftyJSON
+
+class Config {
+    static let logger = Logger(label: "Config")
+
     private let _azureSubscriptionKey: String
     private let _mapquestLookupKey: String
     private let _mapzenLookupKey: String
@@ -68,7 +72,7 @@ class Config
             let jsonString: String = json.rawString()!
             try jsonString.write(to: Config.fullLocationFilenameURL, atomically: false, encoding: String.Encoding.utf8)
         } catch let error {
-            Logger.log("Unable to save locations: \(error)")
+            Config.logger.error("Unable to save locations: \(error)")
         }
     }
 

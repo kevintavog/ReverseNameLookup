@@ -1,23 +1,23 @@
-import PerfectLib
-import PerfectHTTP
-import PerfectHTTPServer
+import Vapor
 
 
-let server = HTTPServer()
+let eventGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount * 2)
+let eventLoop = eventGroup.next()
 
-let logger = RangicLogger()
-server.setRequestFilters([(logger, .high)])
-server.setResponseFilters([(logger, .low)])
-
-var routes = makeJSONRoutes()
-routes.add(method: .get, uri: "/status", handler: statusHandler)
-
-server.addRoutes(routes)
-server.serverPort = 8888
+// ElasticSearchClient.ServerUrl = Config.elasticSearchUrl
 
 do {
-	Logger.log("Using ElasticSearch host: \(Config.elasticSearchUrl)")
-	try server.start()
+    // try ElasticSearchInit.run(eventLoop)
+    // print("ElasticSearch \(ElasticSearchClient.version); \(ElasticSearchClient.ServerUrl)")
+
+    var env = try Environment.detect()
+    try LoggingSystem.bootstrap(from: &env)
+    let app = Application(env)
+
+    // Oddly, invoking shutdown times out and reports an error (after an API call is made).
+    // defer { app.shutdown() }
+    try configure(app)
+    try app.run()
 } catch {
-	fatalError("\(error)")
+    print("Server failed: \(error)")
 }

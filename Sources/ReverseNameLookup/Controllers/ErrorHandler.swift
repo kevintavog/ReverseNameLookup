@@ -1,3 +1,4 @@
+/*
 import PerfectHTTP
 
 extension Handlers {
@@ -17,3 +18,5 @@ extension Handlers {
 		response.completed()
 	}
 }
+
+*/

@@ -1,18 +1,35 @@
 import Foundation
+import NIO
+
+import Just
+import SwiftyJSON
 
 class AzureNameResolver {
     let baseAddress = "https://atlas.microsoft.com/search/address/reverse/json?subscription-key=%1$s&api-version=1.0&query=%2$lf,%3$lf&radius=500&language=en-US"
 
-    func resolve(_ latitude: Double, _ longitude: Double, maxDistanceInMeters: Int) throws -> JSON? {
+    let eventLoop: EventLoop
+    init(eventLoop: EventLoop) {
+        self.eventLoop = eventLoop
+    }
+
+    func resolve(_ latitude: Double, _ longitude: Double, maxDistanceInMeters: Int) -> EventLoopFuture<JSON> {
         var url = ""
         Config.azureSubscriptionKey.withCString {
             url = String(format: baseAddress, $0, latitude, longitude)
         }
 
-        guard let data = try synchronousHttpGet(url) else {
-            throw NameResolverError.NoDataReturned
+        let promise = eventLoop.makePromise(of: JSON.self)
+        Just.get(url) { response in
+            if response.ok {
+                if let content = response.content {
+                    if let json = try? JSON(data: content) {
+                        promise.succeed(json)
+                    }
+                }
+            }
+            promise.fail(NameResolverError.NoDataReturned)
         }
 
-        return try JSON(data: data)
+        return promise.futureResult
     }
 }

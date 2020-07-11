@@ -1,56 +1,71 @@
+import NIO
+import Logging
+
+import SwiftyJSON
+
+struct PlacenameAndJson {
+    let placename: Placename
+    let json: JSON
+
+    init(_ placename: Placename, _ json: JSON) {
+        self.placename = placename
+        self.json = json
+    }
+}
 
 class ToPlacenameBase {
-    func from(latitude: Double, longitude: Double, distance: Int, cacheOnly: Bool = false) throws -> (Placename, JSON) {
-        var response: JSON?
+    static let logger = Logger(label: "ToPlacenameBase")
 
-        do {
-            response = try fromCache(latitude, longitude, distance)
-        } catch NameResolverError.NoMatches {
-            // The cache doesn't have this entry, no value in logging that info
-        }  catch {
-Logger.log("cache exception: \(error)")
-        }
 
-        // Not in the cache, get it from the source
-        if !cacheOnly && response == nil {
-            do {
-                try Logger.log("Getting location from source: \(latitude),\(longitude) - \(placenameIdentifier())")
-                response = try fromSource(latitude, longitude, distance)
-            } catch {
-Logger.log("fromSource exception: \(error)")
-            }
+    let eventLoop: EventLoop
+    init(eventLoop: EventLoop) {
+        self.eventLoop = eventLoop
+    }
 
-            if response != nil {
-                // This can be done asynchronously - it'll shave off a bit of request time/duration
-                do {
-                    try saveToCache(latitude, longitude, response!)
-                } catch {
-                    Logger.log("Caching of \(latitude), \(longitude) failed: \(error), data: \(response!)")
+    func from(latitude: Double, longitude: Double, distance: Int, cacheOnly: Bool = false) -> EventLoopFuture<PlacenameAndJson> {
+        return fromCache(latitude, longitude, distance)
+            .flatMapError { err in
+                if !cacheOnly, case NameResolverError.NoMatches = err {
+                    return self.fromSource(latitude, longitude, distance)
+                        .flatMap { json in
+                            self.saveToCache(latitude, longitude, json)
+                            return self.eventLoop.makeSucceededFuture(json)
+                        }
+                } else {
+                    ToPlacenameBase.logger.error("cache error: \(err)")
+                    return self.eventLoop.makeFailedFuture(err)
                 }
             }
+            .flatMap { json in
+                return self.convert(latitude, longitude, json)
+            }
+    }
+
+    func convert(_ latitude: Double, _ longitude: Double, _ json: JSON) -> EventLoopFuture<PlacenameAndJson> {
+        do {
+            return try eventLoop.makeSucceededFuture(
+                PlacenameAndJson(toPlacename(latitude, longitude, json), json))
+        } catch {
+            return eventLoop.makeFailedFuture(error)
         }
-
-        guard let json = response else {
-            throw LocationToNameInfo.Error.NoDataInResponse
-        }
-
-        return try (toPlacename(latitude, longitude, json), json)
     }
 
-    func placenameIdentifier() throws -> String {
-        throw LocationToNameInfo.Error.NotImplemented("'placenameIdentifier' is not implemented in the derived class")
+    func placenameIdentifier() -> String {
+        return "'placenameIdentifier' is not implemented in the derived class"
     }
 
-    func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
-        throw LocationToNameInfo.Error.NotImplemented("'fromCache' is not implemented in the derived class")
+    func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
+        return eventLoop.makeFailedFuture(
+            LocationToNameInfo.Error.NotImplemented("'fromCache' is not implemented in the derived class"))
     }
 
-    func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
-        throw LocationToNameInfo.Error.NotImplemented("'fromSource' is not implemented in the derived class")
+    func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
+        return eventLoop.makeFailedFuture(
+            LocationToNameInfo.Error.NotImplemented("'fromSource' is not implemented in the derived class"))
     }
 
-    func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) throws {
-        throw LocationToNameInfo.Error.NotImplemented("'saveToCache' is not implemented in the derived class")
+    func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) {
+        ToPlacenameBase.logger.error("'saveToCache' is not implemented in the derived class")
     }
 
     func toPlacename(_ latitude: Double, _ longitude: Double, _ json: JSON) throws -> Placename {

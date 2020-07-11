@@ -1,23 +1,34 @@
 import Foundation
+import Logging
+import NIO
+
+import SwiftyJSON
 
 class OpenCageDataLocationToPlacename : ToPlacenameBase{
+    let cacheResolver: ElasticSearchCachedNameResolver
 
-    let cacheResolver = ElasticSearchCachedNameResolver(indexName: "opencagedata_placenames_cache")
+    override init(eventLoop: EventLoop) {
+        cacheResolver = ElasticSearchCachedNameResolver(
+            eventLoop: eventLoop,
+            indexName: "opencagedata_placenames_cache")
 
-    override func placenameIdentifier() throws -> String {
+        super.init(eventLoop: eventLoop)
+    }
+
+    override func placenameIdentifier() -> String {
         return "OpenCageData"
     }
 
-    override func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
-        return try cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: distance)
+    override func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
+        return cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: distance)
     }
 
-    override func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
-        return try OpenCageDataNameResolver().resolve(latitude, longitude, maxDistanceInMeters: distance)
+    override func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
+        return OpenCageDataNameResolver(eventLoop: eventLoop).resolve(latitude, longitude, maxDistanceInMeters: distance)
     }
 
-    override func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) throws {
-        try cacheResolver.cache(latitude, longitude, json)
+    override func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) {
+        cacheResolver.cache(latitude, longitude, json)
     }
 
     override func toPlacename(_ latitude: Double, _ longitude: Double, _ json: JSON) throws -> Placename {
@@ -27,7 +38,7 @@ class OpenCageDataLocationToPlacename : ToPlacenameBase{
         }
 
         if json["results"][1].exists() {
-            Logger.log("OpenCageData has multiple results: \(json["results"])")
+            OpenCageDataLocationToPlacename.logger.warning("OpenCageData has multiple results: \(json["results"])")
         }
 
         let site = siteName(components)

@@ -1,4 +1,7 @@
 import Foundation
+import Logging
+import NIO
+import SwiftyJSON
 
 struct SiteInfo {
     let name: String
@@ -11,30 +14,35 @@ struct SiteInfo {
 }
 
 class OverpassLocationToPlacename : ToPlacenameBase{
-
     let logDiagnostics = false
+    let cacheResolver: ElasticSearchCachedNameResolver
 
-    let cacheResolver = ElasticSearchCachedNameResolver(indexName: "overpass_placenames_cache")
+    override init(eventLoop: EventLoop) {
+        cacheResolver = ElasticSearchCachedNameResolver(
+            eventLoop: eventLoop,
+            indexName: "overpass_placenames_cache")
 
-    override func placenameIdentifier() throws -> String {
+        super.init(eventLoop: eventLoop)
+    }
+
+    override func placenameIdentifier() -> String {
         return "Overpass"
     }
 
-    override func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
-        let c =  try cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: distance)
-        return c
+    override func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
+        return cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: distance)
     }
 
-    override func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) throws -> JSON? {
-        let json = try OverpassNameResolver().resolve(latitude, longitude, maxDistanceInMeters: distance)
-        if let real = json {
-            return filterResponse(real)
-        }
-        return json
+    override func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
+        return OverpassNameResolver(eventLoop: eventLoop)
+            .resolve(latitude, longitude, maxDistanceInMeters: distance)
+            .flatMap { json in
+                return self.eventLoop.makeSucceededFuture(self.filterResponse(json))
+            }
     }
 
-    override func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) throws {
-        try cacheResolver.cache(latitude, longitude, json)
+    override func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) {
+        cacheResolver.cache(latitude, longitude, json)
     }
 
     func isUsableAdmin(_ json: JSON) -> Bool {
@@ -290,7 +298,7 @@ for e in adminElements! {
         // If it doesn't have bounds, we can't use it (to determine the smallest of the sites)
         if site && (!json["bounds"]["minlat"].exists() || !json["bounds"]["minlon"].exists() ||
             !json["bounds"]["maxlat"].exists() || !json["bounds"]["maxlon"].exists()) {
-Logger.log("no bounds for \(json)")
+                OverpassLocationToPlacename.logger.warning("no bounds for \(json)")
                 return false
         }
 
@@ -315,7 +323,7 @@ diagnostic("site name?: \(json["tags"]["name"]) (\(json["tags"]["name:en"])); bu
         return site
     }
 
-
+/*
 // temp method for testing/development
 static func filterFile(_ filename: String) throws {
     do {
@@ -326,6 +334,7 @@ static func filterFile(_ filename: String) throws {
 Logger.log("output: \(outJson)")
     }
 }
+*/
 
     // The Overpass response is huge, with many tags that aren't useful to us - filter those out.
     func filterResponse(_ json: JSON) -> JSON {
@@ -362,7 +371,7 @@ Logger.log("output: \(outJson)")
 
     func diagnostic(_ msg: String) {
         if logDiagnostics {
-            Logger.log(msg)
+            OverpassLocationToPlacename.logger.info("\(msg)")
         }
     }
 }

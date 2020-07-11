@@ -1,3 +1,4 @@
+/*
 import Foundation
 
 import PerfectLib
@@ -63,3 +64,4 @@ public class RangicLogger: HTTPRequestFilter, HTTPResponseFilter {
 		callback(.continue)
 	}
 }
+*/
