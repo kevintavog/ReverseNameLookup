@@ -1,15 +1,7 @@
 import Vapor
 
 
-let eventGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount * 2)
-let eventLoop = eventGroup.next()
-
-// ElasticSearchClient.ServerUrl = Config.elasticSearchUrl
-
 do {
-    // try ElasticSearchInit.run(eventLoop)
-    // print("ElasticSearch \(ElasticSearchClient.version); \(ElasticSearchClient.ServerUrl)")
-
     var env = try Environment.detect()
     try LoggingSystem.bootstrap(from: &env)
     let app = Application(env)

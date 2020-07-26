@@ -2,7 +2,7 @@ import Foundation
 
 import Vapor
 
-struct Placename : Content {
+struct Placename: Content {
     let description: String
     let fullDescription: String
     let sites: [String]?
@@ -29,5 +29,25 @@ struct Placename : Content {
             state, 
             countryName]
         self.description = nameComponents.compactMap( { $0 }).joined(separator: ", ")
+    }
+}
+
+struct BulkItemRequest: Content {
+    let lat: Double
+    let lon: Double
+
+    init(lat: Double, lon: Double) {
+        self.lat = lat
+        self.lon = lon
+    }
+}
+
+struct BulkItemResponse: Content {
+    let placename: Placename?
+    let error: String?
+
+    init(_ placename: Placename?, _ error: String?) {
+        self.placename = placename
+        self.error = error
     }
 }

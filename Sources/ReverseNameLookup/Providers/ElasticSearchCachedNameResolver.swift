@@ -50,6 +50,45 @@ class ElasticSearchCachedNameResolver {
         }
     """
 
+    func asQuery(_ latitude: Double, _ longitude: Double, maxDistanceInMeters: Int) -> String {
+        let query = String(format: searchTemplate, latitude, longitude, maxDistanceInMeters)
+        return query.split(separator: "\n")
+            .map{ $0.trimmingCharacters(in: .whitespaces) }
+            .joined(separator: "")
+    }
+
+    func msearch(_ body: String) -> EventLoopFuture<[JSON?]> {
+        let url = "\(Config.elasticSearchUrl)/_msearch"
+        let promise = eventLoop.makePromise(of: [JSON?].self)
+        Just.post(
+            url,
+            headers: Headers,
+            requestBody: (body + "\n").data(using: .utf8, allowLossyConversion: false)!) { response in
+
+            if response.ok {
+                if let content = response.content {
+                    if let json = try? JSON(data: content) {
+                        var jsonResults: [JSON?] = []
+                        if let results = json["responses"].array {
+                            for r in results {
+                                let total = r["hits"]["total"].intValue
+                                if total >= 1 {
+                                    jsonResults.append(r["hits"]["hits"][0]["_source"])
+                                } else {
+                                    jsonResults.append(nil)
+                                }
+                            }
+                            promise.succeed(jsonResults)
+                        }
+                    }
+                }
+            }
+
+            promise.fail(NameResolverError.NoMatches)
+        }
+
+        return promise.futureResult
+    }
 
     func resolve(_ latitude: Double, _ longitude: Double, maxDistanceInMeters: Int) -> EventLoopFuture<JSON> {
         let body = String(format: searchTemplate, latitude, longitude, maxDistanceInMeters)

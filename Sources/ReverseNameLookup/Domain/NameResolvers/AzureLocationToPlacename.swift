@@ -3,29 +3,18 @@ import NIO
 import SwiftyJSON
 
 class AzureLocationToPlacename: ToPlacenameBase {
-    let cacheResolver:  ElasticSearchCachedNameResolver
+    static let indexName = "azure_placenames_cache"
 
-    override init(eventLoop: EventLoop) {
-        cacheResolver = ElasticSearchCachedNameResolver(
-            eventLoop: eventLoop, indexName: "azure_placenames_cache")
-
-        super.init(eventLoop: eventLoop)
+    init(eventLoop: EventLoop) {
+        super.init(eventLoop: eventLoop, indexName: AzureLocationToPlacename.indexName)
     }
 
     override func placenameIdentifier() -> String {
         return "Azure"
     }
 
-    override func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
-        return cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: distance)
-    }
-
     override func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
         return AzureNameResolver(eventLoop: eventLoop).resolve(latitude, longitude, maxDistanceInMeters: distance)
-    }
-
-    override func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) {
-        cacheResolver.cache(latitude, longitude, json)
     }
 
     override func toPlacename(_ latitude: Double, _ longitude: Double, _ json: JSON) throws -> Placename {

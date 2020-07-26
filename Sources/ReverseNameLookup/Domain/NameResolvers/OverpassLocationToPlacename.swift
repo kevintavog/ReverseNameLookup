@@ -14,23 +14,15 @@ struct SiteInfo {
 }
 
 class OverpassLocationToPlacename : ToPlacenameBase{
+    static let indexName = "overpass_placenames_cache"
     let logDiagnostics = false
-    let cacheResolver: ElasticSearchCachedNameResolver
 
-    override init(eventLoop: EventLoop) {
-        cacheResolver = ElasticSearchCachedNameResolver(
-            eventLoop: eventLoop,
-            indexName: "overpass_placenames_cache")
-
-        super.init(eventLoop: eventLoop)
+    init(eventLoop: EventLoop) {
+        super.init(eventLoop: eventLoop, indexName: OverpassLocationToPlacename.indexName)
     }
 
     override func placenameIdentifier() -> String {
         return "Overpass"
-    }
-
-    override func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
-        return cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: distance)
     }
 
     override func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
@@ -39,10 +31,6 @@ class OverpassLocationToPlacename : ToPlacenameBase{
             .flatMap { json in
                 return self.eventLoop.makeSucceededFuture(self.filterResponse(json))
             }
-    }
-
-    override func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) {
-        cacheResolver.cache(latitude, longitude, json)
     }
 
     func isUsableAdmin(_ json: JSON) -> Bool {

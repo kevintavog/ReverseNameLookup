@@ -6,13 +6,16 @@ import Vapor
 final class LoggingMiddleware: Middleware {
     static let logger = Logger(label: "LoggingMiddleware")
 
-    let dateFormatter: DateFormatter
+    static public  var dateFormatter: DateFormatter = {
+        let dt = DateFormatter()
+        dt.locale = Locale(identifier: "en_US_POSIX")
+        dt.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
+        dt.timeZone = TimeZone(secondsFromGMT: 0)
+        return dt
+    }()
 
-    public init() {
-        dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
-        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+    static public func info(_ msg: String) {
+        LoggingMiddleware.logger.info("[\(LoggingMiddleware.dateFormatter.string(from: Date()))] \(msg)")        
     }
 
     public func respond(to request: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
@@ -33,8 +36,12 @@ final class LoggingMiddleware: Middleware {
                     break
             }
 
-            let startString = self.dateFormatter.string(from: start)
-            let msg = "[\(startString)] \(request.method) \(request.url.path)"
+            let startString = LoggingMiddleware.dateFormatter.string(from: start)
+            var url = request.url.path
+            if let q = request.url.query {
+                url += "?\(q)"
+            }
+            let msg = "[\(startString)] \(request.method) \(url)"
                     + " status=\(status) duration_ms=\(duration)"
                     + " response_bytes=\(responseLength)"
             LoggingMiddleware.logger.info("\(msg)")

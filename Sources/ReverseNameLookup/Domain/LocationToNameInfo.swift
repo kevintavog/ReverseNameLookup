@@ -67,34 +67,61 @@ class LocationToNameInfo {
         let promise = eventLoop.makePromise(of: Placename.self)
 
         _from(latitude, longitude, distance, cacheOnly) { azurePJ, foursquarePJ, openCageDataPJ, overpassPJ in
-            let bestCountryCode = self.countryCodeFromAll(overpassPJ, azurePJ, openCageDataPJ)
-            var bestCity = self.cityFromAll(overpassPJ, azurePJ, foursquarePJ, openCageDataPJ, bestCountryCode)
-            let bestState = self.stateFromAll(overpassPJ, azurePJ, openCageDataPJ, bestCountryCode)
-            let bestCountryName = self.countryNameFromAll(overpassPJ, azurePJ, openCageDataPJ, bestCountryCode)
-            let (bestSite, allSites) = self.siteFromAll(overpassPJ, azurePJ, openCageDataPJ, bestCity)
-            let bestFullDescription = self.descriptionFromAll(overpassPJ, azurePJ, openCageDataPJ)
-            if bestSite == bestCity {
-                bestCity = nil
-            }
-
-            let (latitude, longitude) = self.location(overpassPJ, openCageDataPJ, azurePJ)
-
-            var placename = Placename(
-                sites: allSites,
-                site: bestSite,
-                city: bestCity,
-                state: bestState,
-                countryCode: bestCountryCode,
-                countryName: bestCountryName,
-                fullDescription: bestFullDescription)
-            placename.latitude = latitude
-            placename.longitude = longitude
-            promise.succeed(placename)
+            promise.succeed(self.toPlacename(azurePJ, foursquarePJ, openCageDataPJ, overpassPJ))
         }
 
         return promise.futureResult
     }
 
+    func bulk(items: [BulkItemRequest], distance: Int, cacheOnly: Bool) -> EventLoopFuture<[BulkItemResponse]> {
+        let azure = AzureLocationToPlacename(eventLoop: eventLoop)
+        let foursquare = FoursquareLocationToPlacename(eventLoop: eventLoop)
+        let openCageData = OpenCageDataLocationToPlacename(eventLoop: eventLoop)
+        let overpass = OverpassLocationToPlacename(eventLoop: eventLoop)
+
+        return azure.bulk(items, [azure, foursquare, openCageData, overpass], distance)
+            .map { nameAndJson in
+                var responses: [BulkItemResponse] = []
+                let groupSize = 4
+                let groups = stride(from: 0, to: nameAndJson.count, by: groupSize)
+                    .map { Array(nameAndJson[$0..<min($0 + groupSize, nameAndJson.count)]) }
+                for g in groups {
+                    responses.append(
+                        BulkItemResponse(
+                            self.toPlacename(g[0], g[1], g[2], g[3]),
+                            nil)
+                        )
+                }
+                return responses
+        }
+    }
+
+    func toPlacename(_ azurePJ: PlacenameAndJson, _ foursquarePJ: PlacenameAndJson, 
+                        _ openCageDataPJ: PlacenameAndJson, _ overpassPJ: PlacenameAndJson) -> Placename {
+        let bestCountryCode = self.countryCodeFromAll(overpassPJ, azurePJ, openCageDataPJ)
+        var bestCity = self.cityFromAll(overpassPJ, azurePJ, foursquarePJ, openCageDataPJ, bestCountryCode)
+        let bestState = self.stateFromAll(overpassPJ, azurePJ, openCageDataPJ, bestCountryCode)
+        let bestCountryName = self.countryNameFromAll(overpassPJ, azurePJ, openCageDataPJ, bestCountryCode)
+        let (bestSite, allSites) = self.siteFromAll(overpassPJ, azurePJ, openCageDataPJ, bestCity)
+        let bestFullDescription = self.descriptionFromAll(overpassPJ, azurePJ, openCageDataPJ)
+        if bestSite == bestCity {
+            bestCity = nil
+        }
+
+        let (latitude, longitude) = self.location(overpassPJ, openCageDataPJ, azurePJ)
+
+        var placename = Placename(
+            sites: allSites,
+            site: bestSite,
+            city: bestCity,
+            state: bestState,
+            countryCode: bestCountryCode,
+            countryName: bestCountryName,
+            fullDescription: bestFullDescription)
+        placename.latitude = latitude
+        placename.longitude = longitude
+        return placename
+    }
 
     func testFrom(latitude: Double, longitude: Double, distance: Int, cacheOnly: Bool) -> EventLoopFuture<[String:Any]> {
         let promise = eventLoop.makePromise(of: [String:Any].self)

@@ -3,13 +3,10 @@ import NIO
 import SwiftyJSON
 
 class FoursquareLocationToPlacename : ToPlacenameBase {
-    let cacheResolver: ElasticSearchCachedNameResolver
+    static let indexName = "foursquare_placenames_cache"
 
-    override init(eventLoop: EventLoop) {
-        cacheResolver = ElasticSearchCachedNameResolver(
-            eventLoop: eventLoop, indexName: "foursquare_placenames_cache")
-
-        super.init(eventLoop: eventLoop)
+    init(eventLoop: EventLoop) {
+        super.init(eventLoop: eventLoop, indexName: FoursquareLocationToPlacename.indexName)
     }
 
     static public func getCity(_ json: JSON) -> String? {
@@ -40,19 +37,13 @@ class FoursquareLocationToPlacename : ToPlacenameBase {
 
     override func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
         return cacheResolver.resolve(latitude, longitude, maxDistanceInMeters: distance)
-            .flatMap { json in
-                var cached = json
-                cached["compact_venues"] = FoursquareLocationToPlacename.toCompactVenues(json, maxDistance: 100, discard: true)
-                return self.eventLoop.makeSucceededFuture(cached)
+            .map { json in
+                return self.postCache(json)
             }
     }
 
     override func fromSource(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
         return FoursquareNameResolver(eventLoop: eventLoop).resolve(latitude, longitude, maxDistanceInMeters: distance)
-    }
-
-    override func saveToCache(_ latitude: Double, _ longitude: Double, _ json: JSON) {
-        cacheResolver.cache(latitude, longitude, json)
     }
 
     override func toPlacename(_ latitude: Double, _ longitude: Double, _ json: JSON) throws -> Placename {
