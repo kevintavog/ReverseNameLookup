@@ -13,6 +13,25 @@ struct Placename: Content {
     let countryName: String?
     var latitude: Double?
     var longitude: Double?
+    var location: PlacenameLocation? = nil
+    var dateCreated: Date? = nil
+
+    struct PlacenameLocation: Content {
+        let lat: Double
+        let lon: Double
+
+        public init(_ lat: Double, _ lon: Double) {
+            self.lat = lat
+            self.lon = lon
+        }
+    }
+
+    public mutating func updateForPersistence() {
+        if latitude != nil && longitude != nil {
+            location = PlacenameLocation(latitude!, longitude!)
+        }
+        dateCreated = Date()
+    }
 
     public init(sites: [String]?, site: String?, city: String?, state: String?, countryCode: String?, countryName: String?, fullDescription: String) {
         self.sites = sites

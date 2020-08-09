@@ -50,41 +50,65 @@ class ElasticSearchCachedNameResolver {
         }
     """
 
-    func asQuery(_ latitude: Double, _ longitude: Double, maxDistanceInMeters: Int) -> String {
+    func asQuery(_ latitude: Double, _ longitude: Double, _ maxDistanceInMeters: Int) -> String {
         let query = String(format: searchTemplate, latitude, longitude, maxDistanceInMeters)
         return query.split(separator: "\n")
             .map{ $0.trimmingCharacters(in: .whitespaces) }
             .joined(separator: "")
     }
 
-    func msearch(_ body: String) -> EventLoopFuture<[JSON?]> {
-        let url = "\(Config.elasticSearchUrl)/_msearch"
+    func msearchJson(_ body: String) -> EventLoopFuture<[JSON?]> {
         let promise = eventLoop.makePromise(of: [JSON?].self)
+
+        msearch(body)
+            .whenComplete { result in
+                switch result {
+                    case .failure(let error):
+                        promise.fail(error)
+                        break
+                    case .success(let data):
+                        if let json = try? JSON(data: data) {
+                            var jsonResults: [JSON?] = []
+                            if let results = json["responses"].array {
+                                for r in results {
+                                    let total = r["hits"]["total"].intValue
+                                    if total >= 1 {
+                                        jsonResults.append(r["hits"]["hits"][0]["_source"])
+                                    } else {
+                                        jsonResults.append(nil)
+                                    }
+                                }
+                                promise.succeed(jsonResults)
+                            }
+                        } else {
+                            promise.fail(NameResolverError.NoMatches)
+                        }
+                        break
+                }
+        }
+
+        return promise.futureResult
+    }
+
+    func msearch(_ body: String) -> EventLoopFuture<Data> {
+        let url = "\(Config.elasticSearchUrl)/_msearch"
+        let promise = eventLoop.makePromise(of: Data.self)
         Just.post(
             url,
             headers: Headers,
             requestBody: (body + "\n").data(using: .utf8, allowLossyConversion: false)!) { response in
 
+            var succeeded = false
             if response.ok {
                 if let content = response.content {
-                    if let json = try? JSON(data: content) {
-                        var jsonResults: [JSON?] = []
-                        if let results = json["responses"].array {
-                            for r in results {
-                                let total = r["hits"]["total"].intValue
-                                if total >= 1 {
-                                    jsonResults.append(r["hits"]["hits"][0]["_source"])
-                                } else {
-                                    jsonResults.append(nil)
-                                }
-                            }
-                            promise.succeed(jsonResults)
-                        }
-                    }
+                    promise.succeed(content)
+                    succeeded = true
                 }
             }
 
-            promise.fail(NameResolverError.NoMatches)
+            if !succeeded {
+                promise.fail(NameResolverError.NoMatches)
+            }
         }
 
         return promise.futureResult
@@ -133,16 +157,17 @@ class ElasticSearchCachedNameResolver {
         do {
             let body = try jsonUpdated.rawData()
             let id = "\(latitude),\(longitude)"
-            Just.post(
-                "\(Config.elasticSearchUrl)/\(indexName)/entry/\(id)",
-                requestBody: body) { response in 
-                
-                    if !response.ok {
-                        ElasticSearchCachedNameResolver.logger.error("Caching failed: \(response)")
-                    }
-                }
+            index(id, body)
         } catch {
             ElasticSearchCachedNameResolver.logger.error("Caching threw exception: \(error)")
+        }
+    }
+
+    func index(_ id: String, _ data: Data) {
+        Just.post("\(Config.elasticSearchUrl)/\(indexName)/entry/\(id)", requestBody: data) { response in
+            if !response.ok {
+                ElasticSearchCachedNameResolver.logger.error("Indexing failed: \(response)")
+            }
         }
     }
 }

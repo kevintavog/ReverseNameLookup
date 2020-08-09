@@ -1,10 +1,12 @@
 import Foundation
 import NIO
+import Logging
 
 import Just
 import SwiftyJSON
 
 class OpenCageDataNameResolver {
+    static let logger = Logger(label: "OpenCageDataNameResolver")
     let baseAddress = "https://api.opencagedata.com/geocode/v1/json?key=%1$s&no_annotations=1&q=%2$lf,%3$lf"
 
     let eventLoop: EventLoop
@@ -18,6 +20,7 @@ class OpenCageDataNameResolver {
             url = String(format: baseAddress, $0, latitude, longitude)
         }
 
+        OpenCageDataNameResolver.logger.info("OpenCageData: \(url)")
         let promise = eventLoop.makePromise(of: JSON.self)
         Just.get(url) { response in
             if response.ok {

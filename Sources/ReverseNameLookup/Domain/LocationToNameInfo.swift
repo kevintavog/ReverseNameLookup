@@ -17,10 +17,12 @@ class LocationToNameInfo {
 
     let eventLoop: EventLoop
     let alwaysInludeCountryName: Bool
+    let placenameCache: PlacenameCache
 
     init(eventLoop: EventLoop, includeCountryName: Bool) {
         self.eventLoop = eventLoop
         self.alwaysInludeCountryName = includeCountryName
+        self.placenameCache = PlacenameCache(eventLoop)
     }
 
     func fromResult(_ result: Result<PlacenameAndJson, Swift.Error>) -> PlacenameAndJson {
@@ -74,6 +76,51 @@ class LocationToNameInfo {
     }
 
     func bulk(items: [BulkItemRequest], distance: Int, cacheOnly: Bool) -> EventLoopFuture<[BulkItemResponse]> {
+        let promise = eventLoop.makePromise(of: [BulkItemResponse].self)
+
+        placenameCache.lookup(items, 3)
+            .whenComplete { result in
+                // If even a single item fails, retrieve from the resolvers (which checks the
+                // provider specific cache first)
+                var failed = false
+                switch result {
+                    case .failure(let error):
+print("placename cache error: \(error)")
+                        failed = true
+                        break
+                    case .success(let placenames):
+                        failed = placenames.firstIndex(where: { $0 == nil }) != nil
+                        if !failed {
+                            // Convert to [BulkItemRespose] & return it
+                            var response = [BulkItemResponse]()
+                            for p in placenames {
+                                response.append(BulkItemResponse(p, nil))
+                            }
+                            promise.succeed(response)
+                        }
+                        break
+                }
+
+                if failed {
+                    self.bulkFromResolvers(items, distance, cacheOnly)
+                        .whenComplete { bulkResult in
+                            switch bulkResult {
+                                case .failure(let error):
+                                    promise.fail(error)
+                                    break
+                                case .success(let bulkResponses):
+                                    promise.succeed(bulkResponses)
+                                    break
+                            }
+                        }
+                }
+            }
+
+        return promise.futureResult
+    }
+
+    func bulkFromResolvers(_ items: [BulkItemRequest], _ distance: Int, _ cacheOnly: Bool) 
+                                -> EventLoopFuture<[BulkItemResponse]> {
         let azure = AzureLocationToPlacename(eventLoop: eventLoop)
         let foursquare = FoursquareLocationToPlacename(eventLoop: eventLoop)
         let openCageData = OpenCageDataLocationToPlacename(eventLoop: eventLoop)
@@ -120,6 +167,9 @@ class LocationToNameInfo {
             fullDescription: bestFullDescription)
         placename.latitude = latitude
         placename.longitude = longitude
+
+        self.placenameCache.save(placename)
+
         return placename
     }
 

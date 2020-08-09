@@ -1,5 +1,6 @@
 import Foundation
 import NIO
+import Logging
 
 import Just
 import SwiftyJSON
@@ -8,6 +9,7 @@ import SwiftyJSON
 //      http://overpass-api.de/api/status
 
 class OverpassNameResolver {
+    static let logger = Logger(label: "OverpassNameResolver")
     let baseAddress = "http://overpass-api.de/api/interpreter"
     let Headers = ["Content-Type": "application/json"]
 
@@ -27,6 +29,7 @@ class OverpassNameResolver {
         let maxLon = longitude + lonDelta
         let query = "[timeout:7][out:json];is_in(\(latitude),\(longitude))->.a;way(pivot.a);out tags geom(\(minLat),\(minLon),\(maxLat),\(maxLon));out bb ids;relation(pivot.a);out tags bb;"
 
+        OverpassNameResolver.logger.info("Overpass: \(query)")
         let promise = eventLoop.makePromise(of: JSON.self)
         Just.post(
             baseAddress, 

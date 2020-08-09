@@ -12,6 +12,22 @@ struct PlacenameAndJson {
         self.placename = placename
         self.json = json
     }
+
+    init() {
+        self.init(
+            Placename(sites: nil, site: nil, city: nil, state: nil, countryCode: nil, countryName: nil, fullDescription: ""),
+            JSON())
+    }
+}
+
+class CacheRequestData {
+    let promise: EventLoopPromise<[PlacenameAndJson]>
+    var namesAndJson: [PlacenameAndJson]
+
+    init(_ promise: EventLoopPromise<[PlacenameAndJson]>, _ namesAndJson: [PlacenameAndJson]) {
+        self.promise = promise
+        self.namesAndJson = namesAndJson
+    }
 }
 
 class ToPlacenameBase {
@@ -79,49 +95,94 @@ class ToPlacenameBase {
             }
         }
 
-        return cacheResolver.msearch(queryList.joined(separator: "\n"))
-            .map { jsonResponses in
-                // Convert each response to PlacenameAndJson
-                var namesAndJson: [PlacenameAndJson] = []
-                var bulkIndex = 0
-                var jsonIndex = 0
-                while jsonIndex < jsonResponses.count {
-                    for rv in resolvers {
-                        let js = jsonResponses[jsonIndex]
-                        var addedItem = false
-                        if let validJson = js {
-                            // let postCacheJson = rv.postCache(validJson)
-                            do {
-                                let bi = items[bulkIndex]
-                                try namesAndJson.append(PlacenameAndJson(
-                                    rv.toPlacename(bi.lat, bi.lon, validJson),
-                                    validJson))
-                                addedItem = true
-                            } catch {
-// print("error: \(error)")
-                                // Ignore, an empty will be added
+        let promise = eventLoop.makePromise(of: [PlacenameAndJson].self)
+        cacheResolver.msearchJson(queryList.joined(separator: "\n"))
+            .whenComplete { result in
+                switch result {
+                    case .failure(let error):
+                        promise.fail(error)
+                        break
+                    case .success(let jsonResponses):
+                        var bulkIndex = 0
+                        var jsonIndex = 0
+                        var jsonCache: [(Int, ToPlacenameBase, BulkItemRequest, JSON?, Int)] = []
+                        while jsonIndex < jsonResponses.count {
+                            for rv in resolvers {                    
+                                jsonCache.append((jsonIndex, rv, items[bulkIndex], jsonResponses[jsonIndex], distance))
+                                jsonIndex += 1
                             }
-                        }
-                        
-                        if !addedItem {
-                            namesAndJson.append(PlacenameAndJson(
-                                Placename(sites: nil, site: nil, city: nil, state: nil, countryCode: nil, countryName: nil, fullDescription: ""),
-                                JSON()
-                            ))                      
+
+                            bulkIndex += 1
                         }
 
-                        jsonIndex += 1
-                    }
-
-                    bulkIndex += 1
+                        // Resolve from the cache, if possible. Otherwise, invoke the name resolver
+                        let cacheRequestData = CacheRequestData(
+                            promise,
+                            Array(repeating: PlacenameAndJson(), count: jsonCache.count))
+                        self.doCacheRequests(jsonCache[...], cacheRequestData)
+                        break
                 }
-
-                return namesAndJson
             }
+
+        return promise.futureResult
     }
 
+    func doCacheRequests(_ remaining: ArraySlice<(Int, ToPlacenameBase, BulkItemRequest, JSON?, Int)>,
+                    _ cacheRequestData: CacheRequestData) {
+        var remaining = remaining
+        if let first = remaining.popFirst() {
+            handleCacheItem(first.1, first.2, first.3, first.4).map { [remaining] pj in
+                cacheRequestData.namesAndJson[first.0] = pj
+                self.doCacheRequests(remaining, cacheRequestData)
+            }.whenFailure { error in
+                cacheRequestData.promise.fail(error)
+            }
+        } else {
+            return cacheRequestData.promise.succeed(cacheRequestData.namesAndJson)
+        }
+    }
+
+    func handleCacheItem(_ resolver: ToPlacenameBase, _ item: BulkItemRequest, _ cachedJson: JSON?, _ distance: Int) 
+                            -> EventLoopFuture<PlacenameAndJson> {
+        let promise = eventLoop.makePromise(of: PlacenameAndJson.self)
+
+        var usedCache = false
+        if let validJson = cachedJson {
+            if let pj = try? PlacenameAndJson(resolver.toPlacename(item.lat, item.lon, validJson), validJson) {
+                usedCache = true
+                promise.succeed(pj)
+            }
+        }
+
+        if !usedCache {
+            resolver.fromSource(item.lat, item.lon, distance)
+            .whenComplete { result in 
+                switch result {
+                    case .failure(let error):
+                        ToPlacenameBase.logger.error("Failed \(resolver.indexName) source: \(error)")
+                        promise.succeed(PlacenameAndJson())
+                        break
+                    case .success(let json):
+                        do {
+                            try promise.succeed(PlacenameAndJson(
+                                resolver.toPlacename(item.lat, item.lon, json),
+                                json))
+                            let _ = resolver.saveToCache(item.lat, item.lon, json)
+                        } catch {
+                            ToPlacenameBase.logger.error("Failed \(resolver.indexName) placename: \(error)")
+                            promise.succeed(PlacenameAndJson())
+                        }
+                        break
+                }
+            }
+        }
+
+        return promise.futureResult
+    }
+
+
     func cacheQuery(_ latitude: Double, _ longitude: Double, _ distance: Int) -> String {
-        return cacheResolver.asQuery(latitude, longitude, maxDistanceInMeters: distance)
+        return cacheResolver.asQuery(latitude, longitude, distance)
     }
 
     func fromCache(_ latitude: Double, _ longitude: Double, _ distance: Int) -> EventLoopFuture<JSON> {
